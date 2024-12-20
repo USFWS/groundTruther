@@ -36,7 +36,7 @@ vignette(topic = "groundTruther", package = "groundTruther")
 
 ## Function Flow
 
-<img src="./vignettes/image/groundTrutherWorkflow.png" title="Overview of groundTruther Workflow." alt="Overview of groundTruther Workflow." width="100%" style="display: block; margin: auto;" />
+<img src="vignettes/image/groundTrutherWorkflow.png" title="Overview of groundTruther Workflow." alt="Overview of groundTruther Workflow." width="100%" style="display: block; margin: auto;" />
 
 ## USFWS Disclaimer
 
