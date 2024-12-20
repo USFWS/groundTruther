@@ -1,0 +1,296 @@
+---
+title: "Introduction to groundTruther"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_vignette:
+    toc: yes
+    toc_depth: 4
+vignette: >
+  %\VignetteIndexEntry{Introduction to groundTruther}
+  %\VignetteEngine{knitr::rmarkdown}
+  \usepackage[utf8]{inputenc}
+---
+
+```{r, load package, include=F, message=F}
+library("groundTruther")
+data("substrateLayers")
+```
+
+## Overview
+
+`groundTruther` provides a collection of methods to estimate the accuracy of patch classifications (e.g., substrate types, land cover classes, or critical habitats used by focal spp.) derived from remote sensing data, while accounting for spatial inaccuracies (e.g., GPS and georectification errors) that can lead to spatial mismatches between ground-truthing and remote sensing data. `groundTruther` propagates classification uncertainty as multiple draws of possible patch types given original patch classifications and estimated classification accuracy. Classification accuracy is estimated from a multinomial model assessing the probability of a true patch type (ground-truthing data) given a patch classification (remote sensing data) using a spatially joined data that matches ground-truthing data to corresponding classified polygons. Two primary approaches to spatially joining data are available that either limit joins to pairs of ground-truthing points and classified polygons that are highly likely to overlap or account for the probability a ground-truthing point is within a classified patch type. The methods within `groundTruther` allow users to account for imperfect spatial data and patch classifications to quantify confidence in classifications and to incorporate uncertainties into products derived from the classified patch types. 
+
+## Inputs
+
+`classificationAccuracy_propagateUncertainty` is the primary function of `groundTruther` which requires two [simple features](https://r-spatial.github.io/sf/) objects, one for ground-truthing points and the other for classified polygons derived from remote sensing data. Each `sf` object passed to `classificationAccuracy_propagateUncertainty` must contain at minimum, a field with the sample id identifying unique data points or polygons and a field with the patch type at a ground-truthing point or of a classified polygon. The function provides several options that allow users to define the method for joining the ground-truthing and remote sensing data (`matchMethod`), the number of realizations of ground-truthing locations (`nReclass`) to draw from a GPS error distribution (defined by `gpsAccuracy` or `gpsAccuracyField` if GPS accuracy information is a field in the ground-truthing data set), and the number of patch reclassifications to draw from a multinomial model estimating classification accuracy (`nDraws`).
+
+## The Example Data
+
+The remote sensing shapefile used for this and other examples in this vignette shows substrate types that were identified and digitized from side-scan sonar data from over 72 kilometers of river. Seven substrate types (`r paste0(sort(unique(substrateLayers[['sonarClass']]$substrate)), collapse = ", ")`) were classified from the imagery. The ground-truthing data are based on visual surveys to characterize substrate composition and dominant substrate a discrete locations. Seven substrate types (`r paste0(sort(unique(substrateLayers[['gtDom_sf']]$domSub)), collapse = ", ")`) were classified during the ground-truthing surveys. The substrate types classified in the side-scan sonar imagery differ from those identified during the ground-truthing surveys in two ways. First, gravel substrates were not classified from the side-scan sonar imagery, because they are difficult to distinguish from pebble (one size class larger) and sand (one size class smaller), but are easily identified in the field. Because patches that are truly gravel were mis-classified as other substrate types, the probability of a patch being gravel given the patch's classification is estimable and can be used to reclassify patches as gravel (see [Estimating Classification Accuracy](#estimating-classification-accuracy) for more details). The second difference is that the other patch type (large woody debris, tires, schools of fish, etc.) was only observed in the side-scan sonar imagery, thus the probability of other substrate types, given a patch classification cannot be estimated and thus patches cannot be reclassified as other, but patches classified as other can be reclassified as other patch types. Identifying target patch types prior to classifying remote sensing data and collecting ground-truthing data can help avoid discrepancies in the patch types observed. In this instance, the other patch type was typically along the river banks, rare, and not important for the end product, thus efforts were not made to collect ground-truthing data from the other class.
+
+## Estimating Classification Accuracy and Propogating Uncertaity
+
+### Limiting Classification Accuracy Estimates to Data With a High Likelihood of Overlap 
+
+The default approach ground-truther provides to joining ground-truthing points and remote sensing polygons is through subsetting ground-truthing data to only include points that are at least a given distance away from the perimeter of the polygon they are within (`matchMethod="bufferedSubset"`). The distance a point must be from the perimeter of a polygon is determined by two parameters: 1) `gpsAccuracy` which defines the magnitude of the horizontal radius of the GPS error distribution for a given confidence envelop (set by `accuracyLevel`, which defaults to 0.95 or a 95% confidence envelop). Alternatively, if GPS accuracy information is included in the ground-truthing data, the name of the field containing GPS accuracy can be passed to `gpsAccuracyField`; and 2) `proportionOverlap` which defines the proportion of a buffer with a radius of `gspAccuracy` (or `gpsAccuracyField`) units around a ground-truthing point, which must be included for a paired ground-truthing point and classified polygon to be retained for estimation of classification accuracy. Estimates of classification accuracy made through this approach are based solely off pairs of ground-truthing points and remote sensing polygons with a high degree of confidence the two overlap.
+
+The code below provides an example of how to estimate classification accuracy and propagate uncertainty for 20 realizations (only 20 draws are used to limit processing time, typically more draws would be needed to fully describe classification accuracy). 
+
+```{r buffered accuracy, warning=FALSE, message=FALSE}
+propUncert_subset <- classificationAccuracy_propagateUncertainty(gtShp=substrateLayers[['gtDom_sf']],
+                                                                 remSensShp=substrateLayers[['sonarClass']],
+                                                                 matchMethod="bufferedSubset",
+                                                                 gtSampleID="samplID", gtPatch="domSub",
+                                                                 remSensSampleID="id",
+                                                                 remSensPatch="substrate",
+                                                                 nReclass=20, gpsAccuracy=5)
+```
+The mean classification accuracy estimates can be obtained through `propUncert_subset$meanProbs`, which is a matrix containing the probability a true patch type (columns), given an initial patch classification (rows).
+
+```{r buffered accuracy probs}
+round(propUncert_subset$meanProbs, digits=2)
+```
+
+Additionally, `data.table` with all the realizations of each classified patch (the `drawnClass` field) is available through `propUncert_subset$remSensPropUncert`, below is a snippet of the data.table:
+
+```{r buffered accuracy out, echo=FALSE}
+propUncert_subset$remSensPropUncert[1:10][, .(id, substrate, area_m2, rkmZone, reClassID, drawID, drawnClassID, drawnClass)]
+```
+
+If the area of each classified patch is included as a field in the remote sensing data passed to `classificationAccuracy_propagateUncertainty`, the reclassified patches can be quickly summarized and visualized using the `summarizeAreas` function: 
+
+```{r buffered accuracy summary plot, message=FALSE, fig.width=6, fig.cap="Figure 1: Box plots showing the distribution of the estimated total area of each patch type for the study area estimated using the buffered subset method. The area of each patch type based on the initial classifications is shown by the yellow squares. In this example, the other type was not documented in ground-truthing data and hence not included in classifications accuracies. Likewise, gravel was unable to be identified through the remote sensing data, but occurance of gravel in the ground-truthing data allowed initial patch classifications to be reclassified as gravel."}
+summarizeAreas(propUncert_dt=propUncert_subset$remSensPropUncert, sumPlot=TRUE,
+               remSensShp=substrateLayers[['sonarClass']], remSensPatchField="substrate",
+               remSensAreaField="area_m2")
+```
+
+The data can also be summarized by groups, such as river kilometer.
+```{r buffered accuracy summary plot groups, message=FALSE, fig.width=6, fig.height=5, fig.cap="Figure 2: Box plots showing the distribution of the estimated total area of each patch type within 5 kilometer river sections of the study area. The area of each patch type based on the initial classifications is shown by the yellow squares. Esitmates of total area are based on the buffered subset method to match ground-truthing data to polygons digitized and classified from remote sensing data."}
+summarizeAreas(propUncert_dt=propUncert_subset$remSensPropUncert[rkmZone<=10], sumPlot=TRUE,
+               remSensShp=substrateLayers[['sonarClass']], remSensPatchField="substrate",
+               remSensAreaField="area_m2", summarizeBy="rkmZone")
+```
+
+Other outputs provided by `classificationAccuracy_propagateUncertainty` include a `sf` object containing the joined ground-truthing and remote sensing data (`gtRemSens`), a list of possible classification accuracies drawn from a multinomial model estimating classification accuracy (`probMats`), and a vector documenting if each draw of classification accuracies from the multinomial model produces a matrix with classification accuracies for all patch types (`fullMat`).
+
+### Using the Probability a Ground-Truthing Point is Within a Patch Type to Estimate Classification Accuracy
+
+Matching ground-truthing data points to classified polygons is also possible through a probabilistic approach by setting `matchMethod=randomPoints`. When `matchMethod=randomPoints` several realizations (defined by `nDraws`) of possible ground-truthing point locations are drawn from the GPS error distribution at each point (determined by the inputs to either `gpsAccuracy` or `gpsAccuracyField`). The sets of ground-truthing point realizations are then joined with the classified patches and for each ground-truthing point, the probability a point is within a patch type is approximated as the proportion of realizations within a patch type. Once the probabilities are calculated, classification accuracy is calculated a few different ways depending on user inputs to `weightedModel` and `subsetByProb`.
+
+#### Weighting Accuracy Estimates by Probability of Overlap
+
+If `weightedModel=TRUE`, the joined ground-truthing and remote sensing data set is reduced to only unique matches of each ground-truthing point and classified patch type. The data is then supplied to a multinomial model, to estimate the probability a true patch type (i.e., ground-truthing patch type) given a remote sensing classification. The probability a ground-truthing point is within a classified patch type (i.e., proportion of location realizations within a patch type) is used to weight each data point supplied to the model (see [Estimating Classification Accuracy](#estimating-classification-accuracy) for more details). Two advantages of the weighted model approach, are that is uses the entire ground-truthing dataset and accounts for the probability a ground-truthing point is within surrounding patch types. A quick example of how to propagate uncertainty through this process is below, again only 20 draws and reclassifications are used to reduce computational overhead, but in practice many more draws and reclassifications are needed.
+
+```{r weighted accuracy, warning=FALSE, message=FALSE}
+propUncert_weighted <- classificationAccuracy_propagateUncertainty(gtShp=substrateLayers[['gtDom_sf']],
+                                                                   remSensShp=substrateLayers[['sonarClass']],
+                                                                   matchMethod="randomPoints",
+                                                                   gtSampleID="samplID", gtPatch="domSub",
+                                                                   remSensSampleID="id",
+                                                                   remSensPatch="substrate",
+                                                                   nDraw=20,
+                                                                   nReclass=20, gpsAccuracy=5,
+                                                                   weightedModel=TRUE)
+```
+
+The weighted classification accuracy estimate means can be obtained through `propUncert_weighted$weightedProbs`:
+
+```{r weighted accuracy probs, echo=FALSE}
+round(propUncert_weighted$weightedProbs, digits=2)
+```
+
+Similar to the buffered subset method, the `summarizedAreas` function provides a quick summary of the reclassified data:
+
+```{r weighted accuracy summary plot, message=FALSE, fig.width=6, fig.cap="Figure 3: Box plots showing the distribution of the estimated total area of each patch type for the study area estimated using the weighted classification accuracy estimates. The area of each patch type based on the initial classifications is shown by the yellow squares."}
+summarizeAreas(propUncert_dt=propUncert_weighted$remSensPropUncert, sumPlot=TRUE,
+               remSensShp=substrateLayers[['sonarClass']], remSensPatchField="substrate",
+               remSensAreaField="area_m2")
+```
+
+
+#### Using Multiple Realizations of Ground-Truthing Locations to Estimate Classification Accuracy
+
+A second approach accounting for the probability of overlap when joining ground-truthing and remote sensing classifications is to estimate the classification accuracy for each set of ground-truthing realizations (see [Determining the Distribution of GPS Error and Drawing Random Points](#determining-the-distribution-of-gps-error-and-drawing-random-points) and [Estimating Classification Accuracy](#estimating-classification-accuracy) for more details), which can be done by setting `matchMethod=randomPoints` and `weightedModel=FALSE`.
+
+```{r random points accuracy, warning=FALSE, message=FALSE}
+propUncert_points <- classificationAccuracy_propagateUncertainty(gtShp=substrateLayers[['gtDom_sf']],
+                                                                   remSensShp=substrateLayers[['sonarClass']],
+                                                                   matchMethod="randomPoints",
+                                                                   gtSampleID="samplID", gtPatch="domSub",
+                                                                   remSensSampleID="id",
+                                                                   remSensPatch="substrate",
+                                                                   nDraw=20,
+                                                                   nReclass=20, gpsAccuracy=5,
+                                                                   weightedModel=FALSE)
+```
+
+The estimates of mean classification accuracy for each realization are not provided in the output, instead, draws from the modeled classification accuracy distribution that were used to reclassify patch types are provided in the `probMats` list. An example of the classification accuracy draws for the first set of ground-truthing realizations is below:
+
+```{r random points accuracy probs, echo=FALSE}
+round(propUncert_points$probMats[[1]], digits=2)
+```
+
+Another a quick summary of the reclassified data:
+
+```{r points accuracy summary plot, message=FALSE, fig.width=6, fig.cap="Figure 4: Box plots showing the distribution of the estimated total area of each patch type for the study area estimated using the random points method. The area of each patch type based on the initial classifications is shown by the yellow squares."}
+summarizeAreas(propUncert_dt=propUncert_points$remSensPropUncert, sumPlot=TRUE,
+               remSensShp=substrateLayers[['sonarClass']], remSensPatchField="substrate",
+               remSensAreaField="area_m2")
+```
+
+##### Adding Additional Uncertainty by Assigning Overlap of Ground-Truthing Realizations
+
+The final approach to account for uncertainty in spatial overlap of ground-truthing points and classified polygons builds on the random points approach above by adding an additional step before estimating classification accuracy. If `subsetByProb=TRUE` (in addition to `matchMethod=randomPoints`, `weightedModel=FALSE`) a series of Bernoulli trials is used to determine which points within a set of realizations to retain for estimating classification accuracy, where the probability of retaining a realization is equal to the probability a ground-truthing location realization overlaps its corresponding patch type (see [Determining the Distribution of GPS Error and Drawing Random Points](#determining-the-distribution-of-gps-error-and-drawing-random-points) for more details). This approach adds an additional level of uncertainty by using the probability of overlap with patch types to subset ground-truthing location realizations. If certain patch types are rare in the data, this approach can lead to draws with incomplete data sets (e.g., some patch types are dropped from the ground-truthing data or remote sensing classifications) where one or more patch types are not included in accuracy estimates. Instances with incomplete data result in reclassified patch types being classified as `NA` and a `FALSE` in the `fullMat` vector for the vector index that corresponds to that set of location realizations. If some realizations have incomplete data sets, `nTries` can be increased to increase the number of attempts used to obtain a full data set for each set of realizations. Below is an example of how to subset points by probability of overlap with classified patch types using the `classificationAccuracy_propagateUncertainty`.
+
+```{r subset points accuracy, warning=FALSE, message=FALSE}
+propUncert_probSubset <- classificationAccuracy_propagateUncertainty(gtShp=substrateLayers[['gtDom_sf']],                                                                     remSensShp=substrateLayers[['sonarClass']],
+                                                                     matchMethod="randomPoints",
+                                                                     gtSampleID="samplID", gtPatch="domSub",
+                                                                     remSensSampleID="id",
+                                                                     remSensPatch="substrate",
+                                                                     nDraw=20,
+                                                                     nReclass=20, gpsAccuracy=5,
+                                                                     weightedModel=FALSE,
+                                                                     subsetByProb=TRUE)
+```
+
+Similar to the random points method, only draws from the modeled classification accuracy distribution that were used to reclassify patch types are provided in the output:
+
+```{r subset points accuracy probs}
+round(propUncert_probSubset$probMats[[1]], digits=2)
+```
+
+Another quick summary of the reclassified data:
+
+```{r subset points accuracy summary plot, message=FALSE, fig.width=6, fig.cap="Figure 5: Box plots showing the distribution of the estimated total area of each patch type for the study area estimated using the subset random points method. The area of each patch type based on the initial classifications is shown by the yellow squares."}
+summarizeAreas(propUncert_dt=propUncert_probSubset$remSensPropUncert, sumPlot=TRUE,
+               remSensShp=substrateLayers[['sonarClass']], remSensPatchField="substrate",
+               remSensAreaField="area_m2")
+```
+
+## A Deeper Dive into the Methods
+
+### Buffering and Subsetting Data Based on GPS Error
+
+If ground-truthing data is subset by buffered areas, GPS accuracy (`gpsAccuracy`) at each ground-truthing point is used to create a buffered area with a radius equal to the GPS accuracy. If the accuracy provided is the distance root mean square error, then the buffered area is equivalent to the confidence envelope of a measured location. For example, if the reported distance root mean square error is at the accuracy level of 0.95, the envelope corresponds to the area that contains the true point location 95% of the time (if measured repeatedly). For ground-truthing points with a buffered area contained within a single patch type, there is a high degree of confidence they are within the corresponding patch type and are used to assess the accuracy of patch classifications. By default, only ground-truthing points with a buffered areas within a single patch type are retained for estimating classification accuracy, but that criteria can be relaxed. Reducing the `proportionOverlap` argument in `classificationAccuracy_propagateUncertainty` to be less than one will join ground-truthing points to patch types that contain the defined proportion of the buffered area within them. Below the `simPatches` function is used to simulate a classified polygons (grids) and ground-truthing data. Setting GPS 95% distance root mean square error to 5 m, figure 6, provides a visual of the points that are retained for estimating classification accuracy.
+
+```{r, sim patch data, warning=FALSE}
+set.seed(385)
+
+simPatches <- simPatchData(xRange=c(0, 2500), yRange=c(0, 2500), cellsize=c(16, 16), crs="EPSG:32617", nPoints=2500,
+                           patches <- c("Bedrock", "Boulder", "Cobble", "Pebble", "Gravel", "Sand", "Silt", "Other"),
+                           patchProbs <- c(0.05, 0.03, 0.1, 0.2, 0, 0.3, 0.3, 0.02),
+                           classAccu <- rbind(c(0.6,  0.01, 0.05, 0.02, 0.22, 0.05, 0.05, 0.0), #bedrock
+                                              c(0.01, 0.48, 0.3,  0.1,  0.09, 0.01, 0.01, 0.0), #boulder
+                                              c(0.1,  0.2,  0.38, 0.2,  0.1,  0.01, 0.01, 0.0), #cobble
+                                              c(0.05, 0.05, 0.2,  0.35, 0.2,  0.1,  0.05, 0.0), #pebble
+                                              c(0.15, 0.05, 0.1,  0.2,  0.25, 0.2,  0.05, 0.0), #gravel
+                                              c(0.1,  0.05, 0.05, 0.1,  0.25, 0.35, 0.1,  0.0), #sand
+                                              c(0.15, 0.01, 0.01, 0.01, 0.02, 0.3,  0.5,  0.0), #silt
+                                              c(1/7,  1/7,  1/7,  1/7,  1/7,  1/7,  1/7,  0.0)  #other
+                           )
+)
+
+#create object of buffered points and subset points based on a 95% distance root square error of 5 m for GPS measurements
+bufferedGT <- st_buffer(simPatches$gtPoints, dist=5)
+gtSub <- bufferSubset(gtShp=simPatches$gtPoints, remSensShp=simPatches$remSensPoly, gtSampleID="gtID",
+                      remSensSampleID="remSensID", remSensPatch="remSensPatchType", gpsAccuracy = 5)
+```
+
+```{r, buffered areas figure, echo=FALSE, fig.width=6, fig.height=6, fig.cap="A map of simulated patch types (shaded grids) and ground-truthing locations (black dots), with buffered areas based on a 95% distance root mean square error GPS accuracy of 5 m. Buffered areas are shown by the white shaded areas, the fully opaque buffered areas show buffered areas that are within a single patch type, whose corresponding ground-truthing point is retained for estimating classification accuracy."}
+ggplot()+
+  geom_sf(data=simPatches$remSensPoly, aes(fill=remSensPatchType), color="grey") +
+  geom_sf(data=bufferedGT, fill="white", alpha = .5) +
+  geom_sf(data=gtSub, color="black", fill="white") +
+  geom_sf(data=simPatches$gtPoints, fill="black") +
+  scale_fill_viridis_d() +
+  labs(fill="Classified\nPatch Type") +
+  coord_sf(xlim=c(300, 400), ylim=c(100, 200), crs="EPSG:32617")
+```
+
+### Determining the Distribution of GPS Error and Drawing Random Points
+
+Positional errors of measured point coordinates are assumed to follow a Rayleigh distribution with a scale ($\sigma$):
+
+$\sigma = R/ \sqrt(-2 * \log(1-accuracyLevel)) \text{ eq. 1}$
+
+where, $R$ is the horizontal radius that encompasses a proportion of the true locations defined by $accuracyLevel$ (typically 0.95), $R$ is also referred to as the distance root mean square error. The scale of the Rayleigh distribution is equivalent to a bivariate normal distribution with no correlation (analogous to two independent normal distributions). Once $\sigma$ is calculated from the distance root mean square error of the GPS accuracy, $N_{draws}$ (defined by user) realizations ($j=1...N_{draws}$) of possible locations ($\boldsymbol{X_{i,j}}$) of each ground-truthing point $i$ from a bivariate normal distribution:
+
+$\boldsymbol{X_{i,j}} \sim normal(\boldsymbol{\mu_{i}} , \boldsymbol{\Sigma_{i}}), \text{ eq. 2}$,
+
+where, $\boldsymbol{\mu_{i}}$ is a vector with the recorded x and y coordinates at ground-truthing point $i$ and
+
+
+\begin{equation}
+ \boldsymbol{\Sigma_{i}} = 
+\begin{pmatrix}
+  \sigma_{i}^2 & 0 \\
+  0 & \sigma_{i}^2 
+\end{pmatrix}
+ \text{ eq. 3.}
+\end{equation}
+
+
+Once $N_{draws}$ sets of ground-truthing location realizations are drawn, the probability ground-truthing point $i$ is within neighboring patch types ($p_{within_{i,k}}$) is approximated as the proportion of realizations for point $i$ that are within each patch type $k$.
+
+$p_{within_{i,k}} = n_{i,k}/N_{draws} \text{ eq. 4}$
+
+where, $n_{i,k}$ is the number of point realizations for ground-truthing sample $i$ that are within patch type $k$ and $N_{draws}$ is the total number of realizations drawn from a bivariate normal distribution with no correlation (eq. 2 and 3). A higher value of $N_{draws}$ will produce better approximations of the probability ground-truthing points are within each patch type.
+
+Depending on how the point clouds of ground-truthing realizations are used to estimate classification accuracy the probability a ground-truthing point is within a patch type is used a few different ways. The first is to reduce the ground-truthing realizations to unique matches with surrounding patch types for each ground-truthing point, creating a ground-truthing data set of pseudo-observations (a single point matches multiple patch types) where each pseudo-observation is assigned a probability of being within its corresponding patch type (eq. 4). The probability a pseudo-observation is within a corresponding patch type is used to weight the pseudo-observation in a multinomial model estimating classification accuracy (see [Estimating Classification Accuracy](#estimating-classification-accuracy) for more details). The weighted model approach allows all ground-truthing observations and the probability of being within each patch type to be incorporated in the estimation of classification accuracy. The second approach is to ignore the calculated probabilities and estimate classification accuracy from each set of ground-truthing location realizations, yielding $N_{draws}$ estimates of classification accuracy. Location realizations for ground-truthing points that occur outside the study area or areas without patch classifications are dropped from the set of location realizations, thus some sets of location realizations my not use all ground-truthing points to estimate classification uncertainty. The final approach is similar to the second, but adds additional uncertainty by using the probability location realization is within its corresponding patch type to determine if that individual realization is included in assessment of classification accuracy. Here, a Bernoulli trial with a probability of $p_{within_{i,j}}$ is used to determine if realization $j$ for point $i$ is retained to estimate classification accuracy:
+
+$retain_{i,j} \sim Bernoulli(p_{within_{i,j}}) \text{ eq. 5},$
+
+where $p_{within_{i,j}}$ is the probability realization $i,j$ is within corresponding patch type $k$ (eq. 4).
+
+### Estimating Classification Accuracy
+
+Classification accuracy is estimated using a multinomial model with ground-truthing observations (or pseudo-observations for weighted models) as the response variable and classified patch types as predictor variables:
+
+$y_{i} \sim multinomial(\pi_{i},N_{i}) \text{ eq. 6}$
+
+where $y_{i}$ is ground-truthing observation $i$, $N_{i}=\sum_{k=1}^r y_{i,k}$ for patch type $k$ and $r$ observed patch types, and $\pi_{i} = \{\pi_{i,1}, \pi_{i,2}, \ldots, \pi_{i,r}\}$, with the constraint that $\sum_{k=1}^r \pi_{i,k} = 1$.
+
+$logit(\pi_{i,k}) = log(\frac{\pi_{i,k}}{\pi_{i,1}}) = (X_{i}\boldsymbol{\beta_{k}}) \text{ eq. 7},$
+
+for $k=2, \ldots, r$, where $X_{i}\beta_{k}$ represents a linear function with $p$ predictor variables for the $k^{th}$ patch type (i.e., $X_{i}\boldsymbol{\beta_{k}} = \beta_{k,1}x_{i,1} + \beta_{k,2}x_{i,2} + \ldots + \beta_{k,p}x_{i,p}$). Because classified patch type is the only predictor variable supplied to the models of classification accuracy (`groundTruther` does not currently support inclusion of other variables as predictors of classification accuracy), $X_{i}$ is a set of dummy variables for the $p$ classified patch types, where $x_{i,p} = 1$ when classified patch$_{i}=p$ and zero otherwise, for $p>1$. Since $\beta_{k,1}$ is an intercept parameter, all $x_{i,1}=1$. To ensure $\pi_{i,k}$ sums to unity, observed patch type (outcome) $k=1$ is set as the reference group, where
+
+$\pi_{i,1} = \frac{1}{1 + \sum_{l=2}^r e^{(X_{i}\boldsymbol{\beta_{l}})}} \text{ eq. 8}$
+
+and $\boldsymbol{\beta_{l}}$ is a vector of coefficients associated with classification $l$ (i.e., classified patch type), thus, $\sum_{l=2}^r e^{(X_{i}\boldsymbol{\beta_{l}})}$ is a vector of summed exponents of coefficient estimates across observed patch types $k=2, \ldots , r$. 
+
+The remaining probabilities are then:
+
+$\pi_{i,k} = \frac{e^{(X_{i}\boldsymbol{\beta_{k}})}}{1 + \sum_{l=2}^r e^{(X_{i}\boldsymbol{\beta_{l}})}} \text{ eq. 9},$
+
+for $k=2, ..., r$, where $\beta_{k}$ is a vector of coefficients when the outcome is patch type $k$. Multinomial models are run using `multinom` from the `nnet` package.
+
+The modeling approach is similar for all methods of matching ground-truthing data to classified polygons. The primary differences are that a single multinomial model is used to estimate classification accuracy when a [buffered area is used to subset ground-truthing points](#buffering-and-subsetting-data-based-on-gps-error) or [pseudo-observations are weighted by probability of being within each patch type](#determining-the-distribution-of-gps-error-and-drawing-random-points). If a point cloud of possible ground-truthing locations is used to approximate the probability individual ground-truthing points overlap surrounding classified patch types, the approximated probabilities are used to weight pseudo-observations in the multinomial model. If individual sets of ground-truthing location realizations are used to estimate classification accuracy [with subsetting](#adding-additional-uncertainty-by-assigning-overlap-of-ground-truthing-realizations) or [without subsetting](#using-multiple-realizations-of-ground-truthing-locations-to-estimate-classification-accuracy) $N_{draws}$, classification accuracy is estimated $N_{draws}$ times, one for each set of ground-truthing location realizations.
+
+### Propagating Classification Accuracy
+
+Once classification accuracy has been estimated, classified polygons are reclassified using the probability a patch classification corresponds to a true patch type. Because classification type is the only predictor variable in the multinomial models, probabilities of true patch type given a classification, can be condensed to a matrix ($\boldsymbol{P}$) with $r$ columns and $p$ rows. Instead of using the estimated mean probabilities as classification accuracy, the estimated mean ($\mu$) and standard deviation ($\sigma$) of the coefficient estimates from the multinomial model(s) are used to draw a set of possible classification accuracies, assuming the parameters are normally distributed ($\beta_{l} \sim normal(\mu, \sigma)$). The coefficients drawn from the model estimates are then back-transformed to the probability scale following equations 8 and 9. A binary design matrix with a row for each classified patch type, is supplied to $X_{i}$, taking the form of a $p * p$ dimension matrix with the first column of all ones to represent the intercept and a diagonal of ones to identify each subsequent classification type:
+
+\begin{equation}
+ X = 
+\begin{pmatrix}
+  1 & 0 & 0 & \ldots & 0 \\
+  1 & 1 & 0 & \ldots & 0 \\
+  1 & 0 & 1 & \ldots & 0 \\
+  \vdots & \vdots & \vdots & \ddots & \vdots \\
+  1 & 0 & 0 & \ldots & 1
+\end{pmatrix}
+\end{equation}
+
+When a [buffered subset of data](#buffering-and-subsetting-data-based-on-gps-error) or [weighted model](#determining-the-distribution-of-gps-error-and-drawing-random-points) is used estimate classification accuracy, several draws of possible coefficients are drawn from the single model used to estimate classification accuracy (defined by `nReclass`). If ground-truthing location realizations are used to join ground-truthing observations to classified polygons and classification accuracy is estimated from each set of location realizations, a single draw of possible coefficient estimates is drawn from each of the $N_{draws}$ models (note that `nReclass` can exceed `nDraws` provided to the `classificationAccuracy_propagateUncertainty`, in which case, the sets of location realizations are resampled to produce `nReclass` sets of location realizations and models of classification accuracy, with some of the initial sets of location realizations being used multiple times). All approaches produce `nReclass` matrices defining classification accuracy ($\boldsymbol{P}$). The rows of $\boldsymbol{P}_{o}$, defining the probability a classified patch type corresponds to a true patch type, are then used to reclassify each polygon from the remote sensing classifications for $o^{th}$ draw of coefficient estimates:
+
+$reclass_{m,o} \sim multinomial(\boldsymbol{P}_{o_{p,*}}, 1) \text{ eq. 10,}$
+
+where $reclass_{m,o}$ is the reclassified patch type for polygon $m$ and $\boldsymbol{P}_{o_{p,*}}$ is the vector of probabilities of the true patch type, given the original classification $p$ of polygon $m$.
+
+## Session Info
+
+```{r session info, echo=FALSE}
+sessionInfo()
+```

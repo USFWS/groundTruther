@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+<meta name="date" content="2024-12-20" />
+
+<title>Introduction to groundTruther</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Introduction to groundTruther</h1>
+<h4 class="date">2024-12-20</h4>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#overview" id="toc-overview">Overview</a></li>
+<li><a href="#inputs" id="toc-inputs">Inputs</a></li>
+<li><a href="#the-example-data" id="toc-the-example-data">The Example
+Data</a></li>
+<li><a href="#estimating-classification-accuracy-and-propogating-uncertaity" id="toc-estimating-classification-accuracy-and-propogating-uncertaity">Estimating
+Classification Accuracy and Propogating Uncertaity</a>
+<ul>
+<li><a href="#limiting-classification-accuracy-estimates-to-data-with-a-high-likelihood-of-overlap" id="toc-limiting-classification-accuracy-estimates-to-data-with-a-high-likelihood-of-overlap">Limiting
+Classification Accuracy Estimates to Data With a High Likelihood of
+Overlap</a></li>
+<li><a href="#using-the-probability-a-ground-truthing-point-is-within-a-patch-type-to-estimate-classification-accuracy" id="toc-using-the-probability-a-ground-truthing-point-is-within-a-patch-type-to-estimate-classification-accuracy">Using
+the Probability a Ground-Truthing Point is Within a Patch Type to
+Estimate Classification Accuracy</a>
+<ul>
+<li><a href="#weighting-accuracy-estimates-by-probability-of-overlap" id="toc-weighting-accuracy-estimates-by-probability-of-overlap">Weighting
+Accuracy Estimates by Probability of Overlap</a></li>
+<li><a href="#using-multiple-realizations-of-ground-truthing-locations-to-estimate-classification-accuracy" id="toc-using-multiple-realizations-of-ground-truthing-locations-to-estimate-classification-accuracy">Using
+Multiple Realizations of Ground-Truthing Locations to Estimate
+Classification Accuracy</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#a-deeper-dive-into-the-methods" id="toc-a-deeper-dive-into-the-methods">A Deeper Dive into the
+Methods</a>
+<ul>
+<li><a href="#buffering-and-subsetting-data-based-on-gps-error" id="toc-buffering-and-subsetting-data-based-on-gps-error">Buffering and
+Subsetting Data Based on GPS Error</a></li>
+<li><a href="#determining-the-distribution-of-gps-error-and-drawing-random-points" id="toc-determining-the-distribution-of-gps-error-and-drawing-random-points">Determining
+the Distribution of GPS Error and Drawing Random Points</a></li>
+<li><a href="#estimating-classification-accuracy" id="toc-estimating-classification-accuracy">Estimating Classification
+Accuracy</a></li>
+<li><a href="#propagating-classification-accuracy" id="toc-propagating-classification-accuracy">Propagating Classification
+Accuracy</a></li>
+</ul></li>
+<li><a href="#session-info" id="toc-session-info">Session Info</a></li>
+</ul>
+</div>
+
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<p><code>groundTruther</code> provides a collection of methods to
+estimate the accuracy of patch classifications (e.g., substrate types,
+land cover classes, or critical habitats used by focal spp.) derived
+from remote sensing data, while accounting for spatial inaccuracies
+(e.g., GPS and georectification errors) that can lead to spatial
+mismatches between ground-truthing and remote sensing data.
+<code>groundTruther</code> propagates classification uncertainty as
+multiple draws of possible patch types given original patch
+classifications and estimated classification accuracy. Classification
+accuracy is estimated from a multinomial model assessing the probability
+of a true patch type (ground-truthing data) given a patch classification
+(remote sensing data) using a spatially joined data that matches
+ground-truthing data to corresponding classified polygons. Two primary
+approaches to spatially joining data are available that either limit
+joins to pairs of ground-truthing points and classified polygons that
+are highly likely to overlap or account for the probability a
+ground-truthing point is within a classified patch type. The methods
+within <code>groundTruther</code> allow users to account for imperfect
+spatial data and patch classifications to quantify confidence in
+classifications and to incorporate uncertainties into products derived
+from the classified patch types.</p>
+</div>
+<div id="inputs" class="section level2">
+<h2>Inputs</h2>
+<p><code>classificationAccuracy_propagateUncertainty</code> is the
+primary function of <code>groundTruther</code> which requires two <a href="https://r-spatial.github.io/sf/">simple features</a> objects, one
+for ground-truthing points and the other for classified polygons derived
+from remote sensing data. Each <code>sf</code> object passed to
+<code>classificationAccuracy_propagateUncertainty</code> must contain at
+minimum, a field with the sample id identifying unique data points or
+polygons and a field with the patch type at a ground-truthing point or
+of a classified polygon. The function provides several options that
+allow users to define the method for joining the ground-truthing and
+remote sensing data (<code>matchMethod</code>), the number of
+realizations of ground-truthing locations (<code>nReclass</code>) to
+draw from a GPS error distribution (defined by <code>gpsAccuracy</code>
+or <code>gpsAccuracyField</code> if GPS accuracy information is a field
+in the ground-truthing data set), and the number of patch
+reclassifications to draw from a multinomial model estimating
+classification accuracy (<code>nDraws</code>).</p>
+</div>
+<div id="the-example-data" class="section level2">
+<h2>The Example Data</h2>
+<p>The remote sensing shapefile used for this and other examples in this
+vignette shows substrate types that were identified and digitized from
+side-scan sonar data from over 72 kilometers of river. Seven substrate
+types (Bedrock, Boulder, Cobble, Pebble, Sand, Silt/Clay, Other) were
+classified from the imagery. The ground-truthing data are based on
+visual surveys to characterize substrate composition and dominant
+substrate a discrete locations. Seven substrate types (Bedrock, Boulder,
+Cobble, Pebble, Gravel, Sand, Silt/Clay) were classified during the
+ground-truthing surveys. The substrate types classified in the side-scan
+sonar imagery differ from those identified during the ground-truthing
+surveys in two ways. First, gravel substrates were not classified from
+the side-scan sonar imagery, because they are difficult to distinguish
+from pebble (one size class larger) and sand (one size class smaller),
+but are easily identified in the field. Because patches that are truly
+gravel were mis-classified as other substrate types, the probability of
+a patch being gravel given the patch’s classification is estimable and
+can be used to reclassify patches as gravel (see <a href="#estimating-classification-accuracy">Estimating Classification
+Accuracy</a> for more details). The second difference is that the other
+patch type (large woody debris, tires, schools of fish, etc.) was only
+observed in the side-scan sonar imagery, thus the probability of other
+substrate types, given a patch classification cannot be estimated and
+thus patches cannot be reclassified as other, but patches classified as
+other can be reclassified as other patch types. Identifying target patch
+types prior to classifying remote sensing data and collecting
+ground-truthing data can help avoid discrepancies in the patch types
+observed. In this instance, the other patch type was typically along the
+river banks, rare, and not important for the end product, thus efforts
+were not made to collect ground-truthing data from the other class.</p>
+</div>
+<div id="estimating-classification-accuracy-and-propogating-uncertaity" class="section level2">
+<h2>Estimating Classification Accuracy and Propogating Uncertaity</h2>
+<div id="limiting-classification-accuracy-estimates-to-data-with-a-high-likelihood-of-overlap" class="section level3">
+<h3>Limiting Classification Accuracy Estimates to Data With a High
+Likelihood of Overlap</h3>
+<p>The default approach ground-truther provides to joining
+ground-truthing points and remote sensing polygons is through subsetting
+ground-truthing data to only include points that are at least a given
+distance away from the perimeter of the polygon they are within
+(<code>matchMethod=&quot;bufferedSubset&quot;</code>). The distance a point must
+be from the perimeter of a polygon is determined by two parameters: 1)
+<code>gpsAccuracy</code> which defines the magnitude of the horizontal
+radius of the GPS error distribution for a given confidence envelop (set
+by <code>accuracyLevel</code>, which defaults to 0.95 or a 95%
+confidence envelop). Alternatively, if GPS accuracy information is
+included in the ground-truthing data, the name of the field containing
+GPS accuracy can be passed to <code>gpsAccuracyField</code>; and 2)
+<code>proportionOverlap</code> which defines the proportion of a buffer
+with a radius of <code>gspAccuracy</code> (or
+<code>gpsAccuracyField</code>) units around a ground-truthing point,
+which must be included for a paired ground-truthing point and classified
+polygon to be retained for estimation of classification accuracy.
+Estimates of classification accuracy made through this approach are
+based solely off pairs of ground-truthing points and remote sensing
+polygons with a high degree of confidence the two overlap.</p>
+<p>The code below provides an example of how to estimate classification
+accuracy and propagate uncertainty for 20 realizations (only 20 draws
+are used to limit processing time, typically more draws would be needed
+to fully describe classification accuracy).</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>propUncert_subset <span class="ot">&lt;-</span> <span class="fu">classificationAccuracy_propagateUncertainty</span>(<span class="at">gtShp=</span>substrateLayers[[<span class="st">&#39;gtDom_sf&#39;</span>]],</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>                                                                 <span class="at">remSensShp=</span>substrateLayers[[<span class="st">&#39;sonarClass&#39;</span>]],</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>                                                                 <span class="at">matchMethod=</span><span class="st">&quot;bufferedSubset&quot;</span>,</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>                                                                 <span class="at">gtSampleID=</span><span class="st">&quot;samplID&quot;</span>, <span class="at">gtPatch=</span><span class="st">&quot;domSub&quot;</span>,</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>                                                                 <span class="at">remSensSampleID=</span><span class="st">&quot;id&quot;</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>                                                                 <span class="at">remSensPatch=</span><span class="st">&quot;substrate&quot;</span>,</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>                                                                 <span class="at">nReclass=</span><span class="dv">20</span>, <span class="at">gpsAccuracy=</span><span class="dv">5</span>)</span></code></pre></div>
+<p>The mean classification accuracy estimates can be obtained through
+<code>propUncert_subset$meanProbs</code>, which is a matrix containing
+the probability a true patch type (columns), given an initial patch
+classification (rows).</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">round</span>(propUncert_subset<span class="sc">$</span>meanProbs, <span class="at">digits=</span><span class="dv">2</span>)</span></code></pre></div>
+<pre><code>##                         prob_Bedrock prob_Boulder prob_Cobble prob_Pebble
+## classified_as_Bedrock           0.71         0.00        0.29        0.00
+## classified_as_Boulder           0.33         0.33        0.00        0.00
+## classified_as_Cobble            0.00         0.00        0.30        0.50
+## classified_as_Pebble            0.00         0.00        0.10        0.10
+## classified_as_Gravel            0.71         0.00        0.29        0.00
+## classified_as_Sand              0.10         0.05        0.00        0.05
+## classified_as_Silt/Clay         0.02         0.00        0.00        0.07
+## classified_as_Other             0.00         0.00        0.00        0.75
+##                         prob_Gravel prob_Sand prob_Silt/Clay
+## classified_as_Bedrock          0.00      0.00           0.00
+## classified_as_Boulder          0.00      0.33           0.00
+## classified_as_Cobble           0.10      0.00           0.10
+## classified_as_Pebble           0.40      0.40           0.00
+## classified_as_Gravel           0.00      0.00           0.00
+## classified_as_Sand             0.19      0.52           0.10
+## classified_as_Silt/Clay        0.02      0.11           0.78
+## classified_as_Other            0.00      0.25           0.00</code></pre>
+<p>Additionally, <code>data.table</code> with all the realizations of
+each classified patch (the <code>drawnClass</code> field) is available
+through <code>propUncert_subset$remSensPropUncert</code>, below is a
+snippet of the data.table:</p>
+<pre><code>##        id substrate area_m2 rkmZone reClassID drawID drawnClassID drawnClass
+##     &lt;int&gt;    &lt;fctr&gt;   &lt;num&gt;   &lt;num&gt;     &lt;int&gt;  &lt;num&gt;        &lt;num&gt;     &lt;char&gt;
+##  1:     1 Silt/Clay       0      20         1      1            7  Silt/Clay
+##  2:     2     Other       0      20         1      1            4     Pebble
+##  3:     3      Sand       0      20         1      1            5     Gravel
+##  4:     4    Pebble       0      15         1      1            5     Gravel
+##  5:     5   Boulder       0      15         1      1            6       Sand
+##  6:     6    Cobble       0      15         1      1            4     Pebble
+##  7:     7      Sand       0      15         1      1            6       Sand
+##  8:     8 Silt/Clay       0      15         1      1            7  Silt/Clay
+##  9:     9   Boulder       0      15         1      1            6       Sand
+## 10:    10      Sand       0      15         1      1            5     Gravel</code></pre>
+<p>If the area of each classified patch is included as a field in the
+remote sensing data passed to
+<code>classificationAccuracy_propagateUncertainty</code>, the
+reclassified patches can be quickly summarized and visualized using the
+<code>summarizeAreas</code> function:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">summarizeAreas</span>(<span class="at">propUncert_dt=</span>propUncert_subset<span class="sc">$</span>remSensPropUncert, <span class="at">sumPlot=</span><span class="cn">TRUE</span>,</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>               <span class="at">remSensShp=</span>substrateLayers[[<span class="st">&#39;sonarClass&#39;</span>]], <span class="at">remSensPatchField=</span><span class="st">&quot;substrate&quot;</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>               <span class="at">remSensAreaField=</span><span class="st">&quot;area_m2&quot;</span>)</span></code></pre></div>
+<div class="float">
+<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAAEgCAMAAABrWDzDAAAA+VBMVEUAAAAAADoAAGYAOpAAZmYAZrYzMzM6AAA6ADo6AGY6Ojo6OpA6kNtNTU1NTW5NTY5Nbo5NbqtNjshmAABmADpmAGZmtttmtv9uTU1uTW5uTY5ubk1ubm5ubo5ubqtujshuq6tuq+SOTU2OTW6OTY6Obk2ObquOjk2Ojo6OyP+QOgCQOjqQZgCQkDqQkGaQtpCQ27aQ2/+rbk2rbm6rbo6rjk2ryKur5Mir5P+2ZgC2///Ijk3Ijm7I5KvI/8jI/+TI///bkDrb/7bb///kq27k/+Tk///r6+v/tmb/yI7/25D/29v/5Kv//wD//7b//8j//9v//+T///9EbPyYAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAPrUlEQVR4nO2dDX/bthHGlWR2ms2y57idEm/z6iTtSm/rFjnbZGsvcqO6kqfaFr//hxkOAClaBEWAIECQfJ5fa0jKHe4A/okXmhYHMQRZaNB0AlC7BYAgKwEgyEoACLISAIKsBIAgK9UI0E8a0jJy4NtY4M4mDYDC9w06aQAUvm/QSQOg8H2DThoAhe8bdNIAKHzfoJMGQOH7Bp00AArfN+ikAVD4vkEnDYC0tb+/30hcANRAsxw47+/bEASAAFBzAFmMfACoXl8AVLevA4C6KsZPU5EbimsijEDh+vZtBAqhWcEFBkAACAApbQBQ8L4AyH+zggsMgAAQAFLaAKDgfQGQ/2YFFxgAASAApLQBQMH7AiD/zQouMAACQFa+NgwAIP/NCi4wAAJAAEhpA4C8+AIgAASAlDYAyIsvAAJAAEhpA4C8+AIgAASAlDYAyIsvAAJAAEhpA4C8+AIgAGT1t/EAqPcA2f1lKgACQABIaQOANAWA1DalAM2HpIiXR7P44d3w+DZWF50GCGsgtY3WCLRkeEwjerUeM5Req4uOA4RdmNJGB6CH95N4fTnhLz/M4tXpTFkAoGL1GyAaXdgsRRPZ6uyWeFIWMf8KlDZ8F4l/WfVKG7p0F0CcjdVbPgrRZMbeKwtpHsJ5EVzg6oPIgKuyewgj0DJdIE+jkhEIABXIAqCfmdoN0PQ8fRVhDVRNfQZILJ9pGFp/mq3H52LfpSgAULH6DJCcnObD4eGk4AJQL64DASCljcYUZqgQmhVcYAAEgLALU9oAIC++/b6QCICsfQEQAPIA0L6RnCcNgMIJrAmQST8DIIfNCi4wAAJAAEhpA4C8+AIgAASAlDYAyIsvAAJAAEhpA4C8+AIgAASAlDYAyIsvAAJAAEhpA4C8+AIgAASAlDYAyIsvAAJAAEhpA4C8+AIgAASAlDYAyIsvAAJAAEhpUz9AkEJ6aJgBVCkRV8II5NYXN9UDIACktAFAXnyxBgJAAEhpA4C8+AIgAASAlDYAyIsvAAJAAEhpA4C8+AIgAASAlDYAyIsvAAJAAEhpA4C8+AIgAASAlDYAyItvnwC6GgyeX7NywX8CoFp8ewTQ1YvP8WIwAkC1+vYHoPuTEf+5B4Dq9O0bQPHjxR4AqtG3PwDxKYyDNABA9fn2CKD46tlHKh4vAFB9vn0CyFYhNCu4wACoGwDp3opef2A9q44AdPeSP2Koe1OY/h8z1By4XwCxHVglcgBQGqPin+Z0BCC5kwdAlQLbQNARgB4vngA0Hw6HR7OdD0ttzTNTPayBAND2LzGmEf1cjyPxgObiogUAeQgMgLYW0eKp3/GuB8bjufEZASA2hR1k3rHpaTiM4tXZLT0AfFdBjWIy6YRWyf03bHTk2zmeLqJXbyc0Ci2POSS7CukQwnnhxNn9VrwzI1BuFzaN9EYgAASAmO5ebV9CnEZYAwEgpY0CoPuTQWYRTfPT+tNsPT4XG67iAgBxKwC0pflweDjZfQGoNdeBAJCJ7AG6/6rCr8NCaJYTZwCkspECQOUCQCobKQBULgCkspECQOUCQCobKQBULgCkspECQOUCQCobKQBULgCkspECQOUCQCobqZ7cVA+ATISb6ut1BkAqG6mt+4EeL0aV74wOoVlOnAGQykZq+36gq4N4If7G2VghNMuJsweAuvGwFQLoBt/OkVNjf9tl8YcAzayBrjg9NxiBngoAqWxUANFN0VcD8R0LACgVAFLZqACyUwjNsnM2W4q4XwgDIO/NsnM2+3sHAER6CtDNYDCqugQCQNV9i/IxbuZGzSyiX/xwMqr8FQshNMvOGQDp+yYt2drG006+k9t4rWMBgPTjJi0BQFkjo/YCINKTKeyGprD7k4N8g3XkulkAyESNABQv6HepFfkBQNV9bZIuUDMAWcl1swCQiZoASPG38SZy3azQAar/F6JtA8jyK+6ClhYbhgBtvTVSfUk7kEncrUV0xWuIXK7Pi9BHIAtfm6QL1MwINOjsHYmNACS6U7XM7CZAlnLdrBYC9DMJAGnKdbMAkIkaAajDN9UDIANV38Z396Z6AGQgm218V2+qB0AGsgGoqzfVYxdmoMproA7fVI/rQAaqDFCHb6oHQAbCNj4vAGQgAJRXZYC01zEAyFaum9UQQLo7KQBkK9fNAkAmAkC1+gIgEwGgvACQgQBQXgDIQAAoL+zCDASA8sJ1IAMBoC3JUaTUzuy2ZgDUH4DEOqbUzg4gC9+ifKo0VgoA1eirDZBRe/VmxcpJWzoDoBp9AVD9cQGQQgBIP26/ANJdRAMg7bi9AugnH9t4i7gunLV6y2LXoAHQ6s1wGPFn7w6PZm1/6C4AUgao3uBygB7eT+LV20k8jejdehyJB30rCn2AdPevSgEgEzUP0JLImEbrywm9e/gwi1enM2WhDZD+FRCVAJCJmgeIY/N+wmYpmslWZ7f0TlnE4qspNDLQM3Mh99/OUUeVdTrXH0BpvROg9ficz2JsFFoec1aUhbTWAB4jUP1JFyiEEejh3bl8NY1KRiA9gLAGcpB0gQIAaPUmSl5Oo1rWQNiFOUi6QM0DJPmhaWr9aUazGd93KQoAZBnXhXPzANH1H1o+s/JwUnABCNeBaonrwrl5gIxVW7Mc+GoCVP8tGQCoTwAF5guAKjbLgS8AUgcAQDnVPwsBoHAA8nAdKLBbkwGQvjTy9XAlGgAJAaCcAJCJAFBOAMhEACgnAGSiTgKERbQ/524C5GMbX7lLiqu0SBoA6au2Zln5AiAhAFTRNzCAGrt8DoAq+gIgg8AWvz0GQAAIAKkEgAwCYwrLCwAZBAZAeVUflIurdJ50U4EBUF4AyCAwAMoLU5hBYACUFwAyCAyA8gJABoEBUF4AyCCw2YIRAAGg+uI6AEjriIUVQc+4oS8UaS6wSVzPI5D7cwojkH3ghkagulIrTFnLCgDZBw4CoPov6AEgX4HDAKj2AwmAfAUOAyCMQPpJBxYYAAGgDgBU+4EEQL4CdxIgzacVAKAaAuv4Jl3YmilsoPe8FABUQ+AgAFKrepcAIH+BARAA6iRAuk9dUjsDIG+BgwVI87lvxc7NAOT+FoICAaCnsgOouV0YAFLZtA0g3e6s/wImAFLadBUgB87tA8hqtQmA6nZuIUB2PR0sQHbnRf8AquzcUYA0UysSANJW3wFysBAGQDXHDRsgk7AAKC8AVDtATUHQEEDd3IVpptapaznNAOTBFwDpCwCpbIIGyCQsAGrEFwDpCwCpbACQtgCQyqYWgBw9dBdroGYDewNoPY48Pvbb6kp0yMciuMDeAHr4MItXpzNPAHX2WAQX2BtAq7Pb+OH9hL2iqcSmJqitsgJoeZwARArhvAgucGeTrgWgzQgEgBz4Bp10LQBhDeTUN+ikawFoPT73uAvr7LEILnDrrwPV7xv0sQgucOuvRNfvG/SxCC4wAAoncGeTBkDh+wadNAAK3zfopB0ApCOby9VWl7qbCtz5pAFQuL6tSBoAhevbiqQBULi+rUjaM0BQ1wSAICsBIMhKAAiyEgCCrOQKoNWbIVOU/Yhuwd/W+nKS+0zpTJ+KO49U1Wxrydw3twnE0yhTbG5gKs77vIqr1MO74fBIZbczcenFIoj/eM/IZmiFZZqLTpMVGIjivC78192VOQOIoq7eZvEwACjvHJsANKcDON0QZAIQ/evmLktzgB7eMdN5ht5UuxLPeMnjvzq7TZqhiQO5P7w7NwdoyeLQrV0FahAgwoOdWtQPrPj1N9Hq998czTafHE6YxXqc6+0tZ96foldENcnnVJsitjj+dLxkqOl3/NQUhaxG6ZmEruSaqYAyoLGMuZz9nVcgEy/z4s38D4VYvk6bwdvPa5tG/DZipej2UKqIvP99+sck6o5+khJgs3q5HQ9EQVj/b7q/WG5HIJbHVNy0yIolS+xNJF4e31Lay+MfLyfTPPpZ56U4AyVAohpZKa9NoWVKpPBPzmJRyGo2d1IqQrPBL8lb31UoOR84Q8zljUxBJF7mtZnCplHaDPZW1rZktRSNFMJc8JaJuqOfsk3mL5idCPRfdvKy/pfuzQDE1xLHt5QQOzfo9JDnEr0U51pMw8xvFR2SOm9MRbfKamSlRS1bvpYvpD+fgKaRLOThECdsQWjRkWRi4JqGH7KhNYkvc5eJl3qlALHzP22GbCd147e3/1LN+ZlW8yyTqLv7Kan+bANqkvacoXOu5e52CmPHmi0OWc/wt9NINoyGR5H2evz1t/khOXFOTE+zq0tWTbZSVexsj9BMSJ3OEBAFdazwL8w7FotaMjFwzdZC67cpLYszo2eyntrllTaTZpQnB5bXtr78p6K7hARAcgSSAO3up0yT2XmT2Im0z37kM1i5u1OA6Fh/SM6eWD0CTeYFU5h0Vo5AotKilqWLh8wIRKe/KGQ1O/OO01HGwFVIHEeCPIozh7JkBEq8UoDYB9k1kKwtnn9XuNZN1kCzp1Hj4n6SEnnJfpaB1pf/OLvVcncKED942TWAOJfSNRCfbBUbsS1nejU/2loDLXfsTtJdWBJcTOSiSKpRbZQyvWXuKsT3Uwn1bxP4y9ZAGS/xH41WmV2YrC2/Nd1qdWYXtkm2BKB4SSPq8jDNlYLM6VKGjrvz60B8s0WY813Y6SyOt3ZhCsKzzmQ6Hw6/FnOxqEZWWtyy5DrQZitFOYhCnGdF01BapzQxcI1TR27BkpYtziRe5iUXQOPD3002zeBDD68tXn/acTCXotPWY7YLm2WSLQOI93ey3ZKBOKk67rgS3Sqt/tB0BtsCQG3SvHT57l0ACLISAIKsBIAgKwEgyEoAaLcWz681rG4Gg8Gzj3F898VH5xkFJgC0WzoAPV68+EwQjQAQtC0dgK6IH0bQi88ACMro/mTw7Pvn13ev/jJgP1+yaerg8eKAQcXGmvhq7+6Lv7LPRsxslHgQQMIwFuVoU3ZUAKhQ9ycH7H9CZy8WlNw8v2bDTHz1ywM2bY3uXrLX7KPMsMNeJob807uXo6RssiUuBYAKxWcvQoGO/v9olmIw3L26fvzT92yyeiU+Fx8lLuxdxlB89EpnFd5eAaBC0WBDx1+OMAu+06KR51c/fHWdLHgIlScjUGIYXw0Ge/RZUnZUAKhQTwC6P2FM0KurvcXe48Vv2FooAShZA91/+ZG/k4Z8DcWX4EnZSQGgQvEpbCFXMwuiacHYWLz48yi++cWXH1OABGnJwic1JKVsnWAN1D/dn+yJRTQHiMaVl+wHH2EWA4ZJCtCT60CJIceP3suy6da4EgAqVrKN50efLWWe/Y0GErrqQxu0DUD8H9Mr0YmhXAqlZUcFgCArASDISgAIshIAgqwEgCArASDISgAIshIAgqwEgCArASDISv8Hkkw7PUnDpXkAAAAASUVORK5CYII=" alt="Figure 1: Box plots showing the distribution of the estimated total area of each patch type for the study area estimated using the buffered subset method. The area of each patch type based on the initial classifications is shown by the yellow squares. In this example, the other type was not documented in ground-truthing data and hence not included in classifications accuracies. Likewise, gravel was unable to be identified through the remote sensing data, but occurance of gravel in the ground-truthing data allowed initial patch classifications to be reclassified as gravel." />
+<div class="figcaption">Figure 1: Box plots showing the distribution of
+the estimated total area of each patch type for the study area estimated
+using the buffered subset method. The area of each patch type based on
+the initial classifications is shown by the yellow squares. In this
+example, the other type was not documented in ground-truthing data and
+hence not included in classifications accuracies. Likewise, gravel was
+unable to be identified through the remote sensing data, but occurance
+of gravel in the ground-truthing data allowed initial patch
+classifications to be reclassified as gravel.</div>
+</div>
+<pre><code>##    drawnClass meanTotalArea medianTotalArea x0.025TotalArea x0.05TotalArea
+##        &lt;char&gt;         &lt;num&gt;           &lt;num&gt;           &lt;num&gt;          &lt;num&gt;
+## 1:  Silt/Clay     567806.10       614922.01       67463.896      83961.880
+## 2:     Pebble     346100.32       288002.78       87943.826     103734.193
+## 3:     Gravel     199753.90       168724.23      100181.491     106885.041
+## 4:       Sand     427474.65       375050.14      198493.392     221871.866
+## 5:    Bedrock     114412.41       102250.92       68427.052      69598.882
+## 6:     Cobble     176025.83       150287.09       39215.900      41910.142
+## 7:    Boulder      31369.23        27698.68        4861.386       7791.447
+##    x0.25TotalArea x0.75TotalArea x0.95TotalArea x0.975TotalArea
+##             &lt;num&gt;          &lt;num&gt;          &lt;num&gt;           &lt;num&gt;
+## 1:      430807.09      707129.25      876626.65       881200.54
+## 2:      224819.79      415554.90      774243.23       829894.14
+## 3:      136015.24      264356.65      357141.22       378164.81
+## 4:      285858.99      521378.09      792396.68       809041.50
+## 5:       87570.02      113963.68      201682.52       226366.92
+## 6:       63959.40      211713.02      405698.14       463743.42
+## 7:       11661.84       44360.92       72408.32        77669.09</code></pre>
+<p>The data can also be summarized by groups, such as river
+kilometer.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">summarizeAreas</span>(<span class="at">propUncert_dt=</span>propUncert_subset<span class="sc">$</span>remSensPropUncert[rkmZone<span class="sc">&lt;=</span><span class="dv">10</span>], <span class="at">sumPlot=</span><span class="cn">TRUE</span>,</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>               <span class="at">remSensShp=</span>substrateLayers[[<span class="st">&#39;sonarClass&#39;</span>]], <span class="at">remSensPatchField=</span><span class="st">&quot;substrate&quot;</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>               <span class="at">remSensAreaField=</span><span class="st">&quot;area_m2&quot;</span>, <span class="at">summarizeBy=</span><span class="st">&quot;rkmZone&quot;</span>)</span></code></pre></div>
+<div class="float">
+<img src="data:image/png;base64,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" alt="Figure 2: Box plots showing the distribution of the estimated total area of each patch type within 5 kilometer river sections of the study area. The area of each patch type based on the initial classifications is shown by the yellow squares. Esitmates of total area are based on the buffered subset method to match ground-truthing data to polygons digitized and classified from remote sensing data." />
+<div class="figcaption">Figure 2: Box plots showing the distribution of
+the estimated total area of each patch type within 5 kilometer river
+sections of the study area. The area of each patch type based on the
+initial classifications is shown by the yellow squares. Esitmates of
+total area are based on the buffered subset method to match
+ground-truthing data to polygons digitized and classified from remote
+sensing data.</div>
+</div>
+<pre><code>##     drawnClass rkmZone meanTotalArea medianTotalArea x0.025TotalArea
+##         &lt;char&gt;   &lt;num&gt;         &lt;num&gt;           &lt;num&gt;           &lt;num&gt;
+##  1:  Silt/Clay       0    174857.140      183803.624       1609.0561
+##  2:     Pebble       0     67052.543        1187.650        478.6860
+##  3:       Sand       0     40271.204        2830.845        261.2010
+##  4:       Sand      10     62126.950       58877.323      19905.5760
+##  5:    Bedrock      10     11087.358        8881.823       2088.8009
+##  6:  Silt/Clay      10     61022.057       62238.402      12552.4357
+##  7:     Gravel      10     31261.948       24386.282       7148.7677
+##  8:     Pebble      10     37347.310       35492.478       5858.6553
+##  9:  Silt/Clay       5    227102.102      255489.865      15167.8660
+## 10:       Sand       5     55465.965         563.637        563.6370
+## 11:     Cobble      10     15806.054       11895.686        722.9312
+## 12:    Boulder      10      7494.653        6028.378         59.9967
+## 13:     Gravel       0     20940.927         472.143        185.5887
+## 14:    Bedrock       0     29782.016        1080.578        261.2010
+## 15:    Bedrock       5       563.637         563.637        563.6370
+## 16:    Boulder       0       865.497        1080.578        261.2010
+## 17:     Pebble       5    131536.899      127744.933      15167.8660
+## 18:    Boulder       5       563.637         563.637        563.6370
+##     x0.05TotalArea x0.25TotalArea x0.75TotalArea x0.95TotalArea x0.975TotalArea
+##              &lt;num&gt;          &lt;num&gt;          &lt;num&gt;          &lt;num&gt;           &lt;num&gt;
+##  1:      1711.4482     111235.567     271500.950     287547.229      287547.229
+##  2:       478.6860        736.781     125619.138     226747.435      256987.825
+##  3:       261.2010       1025.371      53351.909     130089.975      190049.215
+##  4:     21026.4529      36378.712      91130.438     107207.108      115405.811
+##  5:      2139.7988       6153.021      14001.884      26799.549       28178.108
+##  6:     14221.3263      46542.727      84316.304      94332.532       96844.567
+##  7:      8659.8913      13998.533      45421.893      63502.259       68921.321
+##  8:      6308.6546      17363.706      50524.443      69795.697       78061.209
+##  9:     15167.8660     255489.865     255489.865     255489.865      255489.865
+## 10:       563.6370        563.637      15167.866     240321.999      240321.999
+## 11:      1363.4563       7040.228      16343.750      51267.956       53384.902
+## 12:        70.8264       1750.600      10182.005      25790.334       27273.815
+## 13:       200.3024        318.012        944.047      82428.456       92614.007
+## 14:       261.2010        261.201      52070.668     109837.836      112816.685
+## 15:       563.6370        563.637        563.637        563.637         563.637
+## 16:       261.2010        261.201       1080.578       1341.779        1341.779
+## 17:     15167.8660      15167.866     244113.965     253214.685      254352.275
+## 18:       563.6370        563.637        563.637        563.637         563.637</code></pre>
+<p>Other outputs provided by
+<code>classificationAccuracy_propagateUncertainty</code> include a
+<code>sf</code> object containing the joined ground-truthing and remote
+sensing data (<code>gtRemSens</code>), a list of possible classification
+accuracies drawn from a multinomial model estimating classification
+accuracy (<code>probMats</code>), and a vector documenting if each draw
+of classification accuracies from the multinomial model produces a
+matrix with classification accuracies for all patch types
+(<code>fullMat</code>).</p>
+</div>
+<div id="using-the-probability-a-ground-truthing-point-is-within-a-patch-type-to-estimate-classification-accuracy" class="section level3">
+<h3>Using the Probability a Ground-Truthing Point is Within a Patch Type
+to Estimate Classification Accuracy</h3>
+<p>Matching ground-truthing data points to classified polygons is also
+possible through a probabilistic approach by setting
+<code>matchMethod=randomPoints</code>. When
+<code>matchMethod=randomPoints</code> several realizations (defined by
+<code>nDraws</code>) of possible ground-truthing point locations are
+drawn from the GPS error distribution at each point (determined by the
+inputs to either <code>gpsAccuracy</code> or
+<code>gpsAccuracyField</code>). The sets of ground-truthing point
+realizations are then joined with the classified patches and for each
+ground-truthing point, the probability a point is within a patch type is
+approximated as the proportion of realizations within a patch type. Once
+the probabilities are calculated, classification accuracy is calculated
+a few different ways depending on user inputs to
+<code>weightedModel</code> and <code>subsetByProb</code>.</p>
+<div id="weighting-accuracy-estimates-by-probability-of-overlap" class="section level4">
+<h4>Weighting Accuracy Estimates by Probability of Overlap</h4>
+<p>If <code>weightedModel=TRUE</code>, the joined ground-truthing and
+remote sensing data set is reduced to only unique matches of each
+ground-truthing point and classified patch type. The data is then
+supplied to a multinomial model, to estimate the probability a true
+patch type (i.e., ground-truthing patch type) given a remote sensing
+classification. The probability a ground-truthing point is within a
+classified patch type (i.e., proportion of location realizations within
+a patch type) is used to weight each data point supplied to the model
+(see <a href="#estimating-classification-accuracy">Estimating
+Classification Accuracy</a> for more details). Two advantages of the
+weighted model approach, are that is uses the entire ground-truthing
+dataset and accounts for the probability a ground-truthing point is
+within surrounding patch types. A quick example of how to propagate
+uncertainty through this process is below, again only 20 draws and
+reclassifications are used to reduce computational overhead, but in
+practice many more draws and reclassifications are needed.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>propUncert_weighted <span class="ot">&lt;-</span> <span class="fu">classificationAccuracy_propagateUncertainty</span>(<span class="at">gtShp=</span>substrateLayers[[<span class="st">&#39;gtDom_sf&#39;</span>]],</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>                                                                   <span class="at">remSensShp=</span>substrateLayers[[<span class="st">&#39;sonarClass&#39;</span>]],</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>                                                                   <span class="at">matchMethod=</span><span class="st">&quot;randomPoints&quot;</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>                                                                   <span class="at">gtSampleID=</span><span class="st">&quot;samplID&quot;</span>, <span class="at">gtPatch=</span><span class="st">&quot;domSub&quot;</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>                                                                   <span class="at">remSensSampleID=</span><span class="st">&quot;id&quot;</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>                                                                   <span class="at">remSensPatch=</span><span class="st">&quot;substrate&quot;</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>                                                                   <span class="at">nDraw=</span><span class="dv">20</span>,</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>                                                                   <span class="at">nReclass=</span><span class="dv">20</span>, <span class="at">gpsAccuracy=</span><span class="dv">5</span>,</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>                                                                   <span class="at">weightedModel=</span><span class="cn">TRUE</span>)</span></code></pre></div>
+<p>The weighted classification accuracy estimate means can be obtained
+through <code>propUncert_weighted$weightedProbs</code>:</p>
+<pre><code>##                         prob_Bedrock prob_Boulder prob_Cobble prob_Pebble
+## classified_as_Bedrock           0.56         0.00        0.28        0.00
+## classified_as_Boulder           0.07         0.08        0.30        0.22
+## classified_as_Cobble            0.09         0.03        0.21        0.30
+## classified_as_Pebble            0.04         0.00        0.04        0.18
+## classified_as_Gravel            0.56         0.00        0.28        0.00
+## classified_as_Sand              0.12         0.03        0.00        0.05
+## classified_as_Silt/Clay         0.02         0.00        0.00        0.04
+## classified_as_Other             0.01         0.00        0.00        0.39
+##                         prob_Gravel prob_Sand prob_Silt/Clay
+## classified_as_Bedrock          0.04      0.07           0.06
+## classified_as_Boulder          0.08      0.13           0.12
+## classified_as_Cobble           0.14      0.21           0.01
+## classified_as_Pebble           0.15      0.55           0.03
+## classified_as_Gravel           0.04      0.07           0.06
+## classified_as_Sand             0.19      0.56           0.05
+## classified_as_Silt/Clay        0.03      0.16           0.76
+## classified_as_Other            0.17      0.43           0.00</code></pre>
+<p>Similar to the buffered subset method, the
+<code>summarizedAreas</code> function provides a quick summary of the
+reclassified data:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">summarizeAreas</span>(<span class="at">propUncert_dt=</span>propUncert_weighted<span class="sc">$</span>remSensPropUncert, <span class="at">sumPlot=</span><span class="cn">TRUE</span>,</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>               <span class="at">remSensShp=</span>substrateLayers[[<span class="st">&#39;sonarClass&#39;</span>]], <span class="at">remSensPatchField=</span><span class="st">&quot;substrate&quot;</span>,</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>               <span class="at">remSensAreaField=</span><span class="st">&quot;area_m2&quot;</span>)</span></code></pre></div>
+<div class="float">
+<img src="data:image/png;base64,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" alt="Figure 3: Box plots showing the distribution of the estimated total area of each patch type for the study area estimated using the weighted classification accuracy estimates. The area of each patch type based on the initial classifications is shown by the yellow squares." />
+<div class="figcaption">Figure 3: Box plots showing the distribution of
+the estimated total area of each patch type for the study area estimated
+using the weighted classification accuracy estimates. The area of each
+patch type based on the initial classifications is shown by the yellow
+squares.</div>
+</div>
+<pre><code>##    drawnClass meanTotalArea medianTotalArea x0.025TotalArea x0.05TotalArea
+##        &lt;char&gt;         &lt;num&gt;           &lt;num&gt;           &lt;num&gt;          &lt;num&gt;
+## 1:     Pebble     962612.84     1075607.211     105132.0496    130652.8772
+## 2:     Cobble     263097.51      351293.391       9847.3509     19189.4528
+## 3:     Gravel     170011.74       21519.290        547.2919       833.9758
+## 4:       Sand     158912.73      112651.725       4287.5737      8463.5354
+## 5:  Silt/Clay     138338.20       48674.231       1013.6309      1700.2808
+## 6:    Bedrock      29697.18        9163.127        331.6896       463.6691
+## 7:    Boulder     754426.98      776179.249     145023.3805    210435.5390
+##    x0.25TotalArea x0.75TotalArea x0.95TotalArea x0.975TotalArea
+##             &lt;num&gt;          &lt;num&gt;          &lt;num&gt;           &lt;num&gt;
+## 1:     678446.341     1455880.29      1638238.9       1750590.7
+## 2:      75963.803      370229.05       490240.8        521363.7
+## 3:       3323.769      269957.81       652148.3        821858.0
+## 4:      38673.919      253048.08       395861.1        476408.3
+## 5:       3061.062      108144.68       564688.9        664156.2
+## 6:       2129.206       47869.68       103480.8        108293.0
+## 7:     352551.850     1157273.89      1429739.4       1470748.7</code></pre>
+</div>
+<div id="using-multiple-realizations-of-ground-truthing-locations-to-estimate-classification-accuracy" class="section level4">
+<h4>Using Multiple Realizations of Ground-Truthing Locations to Estimate
+Classification Accuracy</h4>
+<p>A second approach accounting for the probability of overlap when
+joining ground-truthing and remote sensing classifications is to
+estimate the classification accuracy for each set of ground-truthing
+realizations (see <a href="#determining-the-distribution-of-gps-error-and-drawing-random-points">Determining
+the Distribution of GPS Error and Drawing Random Points</a> and <a href="#estimating-classification-accuracy">Estimating Classification
+Accuracy</a> for more details), which can be done by setting
+<code>matchMethod=randomPoints</code> and
+<code>weightedModel=FALSE</code>.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>propUncert_points <span class="ot">&lt;-</span> <span class="fu">classificationAccuracy_propagateUncertainty</span>(<span class="at">gtShp=</span>substrateLayers[[<span class="st">&#39;gtDom_sf&#39;</span>]],</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>                                                                   <span class="at">remSensShp=</span>substrateLayers[[<span class="st">&#39;sonarClass&#39;</span>]],</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>                                                                   <span class="at">matchMethod=</span><span class="st">&quot;randomPoints&quot;</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>                                                                   <span class="at">gtSampleID=</span><span class="st">&quot;samplID&quot;</span>, <span class="at">gtPatch=</span><span class="st">&quot;domSub&quot;</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>                                                                   <span class="at">remSensSampleID=</span><span class="st">&quot;id&quot;</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>                                                                   <span class="at">remSensPatch=</span><span class="st">&quot;substrate&quot;</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>                                                                   <span class="at">nDraw=</span><span class="dv">20</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>                                                                   <span class="at">nReclass=</span><span class="dv">20</span>, <span class="at">gpsAccuracy=</span><span class="dv">5</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>                                                                   <span class="at">weightedModel=</span><span class="cn">FALSE</span>)</span></code></pre></div>
+<p>The estimates of mean classification accuracy for each realization
+are not provided in the output, instead, draws from the modeled
+classification accuracy distribution that were used to reclassify patch
+types are provided in the <code>probMats</code> list. An example of the
+classification accuracy draws for the first set of ground-truthing
+realizations is below:</p>
+<pre><code>##                         prob_Bedrock prob_Boulder prob_Cobble prob_Pebble
+## classified_as_Bedrock           0.44         0.00        0.36        0.00
+## classified_as_Boulder           0.21         0.43        0.00        0.24
+## classified_as_Cobble            0.13         0.00        0.16        0.20
+## classified_as_Pebble            0.02         0.00        0.19        0.54
+## classified_as_Gravel            0.44         0.00        0.36        0.00
+## classified_as_Sand              0.08         0.01        0.00        0.04
+## classified_as_Silt/Clay         0.00         0.00        0.00        0.01
+## classified_as_Other             0.00         0.00        0.00        0.12
+##                         prob_Gravel prob_Sand prob_Silt/Clay
+## classified_as_Bedrock          0.00      0.07           0.13
+## classified_as_Boulder          0.05      0.06           0.00
+## classified_as_Cobble           0.31      0.20           0.00
+## classified_as_Pebble           0.02      0.11           0.12
+## classified_as_Gravel           0.00      0.07           0.13
+## classified_as_Sand             0.22      0.63           0.02
+## classified_as_Silt/Clay        0.02      0.11           0.86
+## classified_as_Other            0.24      0.64           0.00</code></pre>
+<p>Another a quick summary of the reclassified data:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">summarizeAreas</span>(<span class="at">propUncert_dt=</span>propUncert_points<span class="sc">$</span>remSensPropUncert, <span class="at">sumPlot=</span><span class="cn">TRUE</span>,</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>               <span class="at">remSensShp=</span>substrateLayers[[<span class="st">&#39;sonarClass&#39;</span>]], <span class="at">remSensPatchField=</span><span class="st">&quot;substrate&quot;</span>,</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>               <span class="at">remSensAreaField=</span><span class="st">&quot;area_m2&quot;</span>)</span></code></pre></div>
+<div class="float">
+<img src="data:image/png;base64,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" alt="Figure 4: Box plots showing the distribution of the estimated total area of each patch type for the study area estimated using the random points method. The area of each patch type based on the initial classifications is shown by the yellow squares." />
+<div class="figcaption">Figure 4: Box plots showing the distribution of
+the estimated total area of each patch type for the study area estimated
+using the random points method. The area of each patch type based on the
+initial classifications is shown by the yellow squares.</div>
+</div>
+<pre><code>##    drawnClass meanTotalArea medianTotalArea x0.025TotalArea x0.05TotalArea
+##        &lt;char&gt;         &lt;num&gt;           &lt;num&gt;           &lt;num&gt;          &lt;num&gt;
+## 1:  Silt/Clay     515926.13       655840.77        9311.551      14668.234
+## 2:       Sand     590218.47       518424.51      207332.968     207881.112
+## 3:     Cobble     264453.88       132245.69       25769.509      26663.428
+## 4:     Gravel     185056.93       154195.26       52754.293      63131.488
+## 5:    Boulder      23476.21        13625.04        1201.245       2018.501
+## 6:     Pebble     173548.03       168998.91       62910.019      77786.506
+## 7:    Bedrock     110262.80       108549.59       55884.960      61829.513
+##    x0.25TotalArea x0.75TotalArea x0.95TotalArea x0.975TotalArea
+##             &lt;num&gt;          &lt;num&gt;          &lt;num&gt;           &lt;num&gt;
+## 1:      89956.727      729108.36     1070682.15       1077482.1
+## 2:     334047.898      804199.92     1007889.24       1195221.5
+## 3:      82190.162      175215.37      919519.30       1021857.3
+## 4:     122660.720      221148.72      365191.50        371016.0
+## 5:       9463.266       33604.65       49559.85         74223.7
+## 6:     122771.531      230115.13      310235.15        321204.6
+## 7:      75310.958      139764.59      165151.13        171641.1</code></pre>
+<div id="adding-additional-uncertainty-by-assigning-overlap-of-ground-truthing-realizations" class="section level5">
+<h5>Adding Additional Uncertainty by Assigning Overlap of
+Ground-Truthing Realizations</h5>
+<p>The final approach to account for uncertainty in spatial overlap of
+ground-truthing points and classified polygons builds on the random
+points approach above by adding an additional step before estimating
+classification accuracy. If <code>subsetByProb=TRUE</code> (in addition
+to <code>matchMethod=randomPoints</code>,
+<code>weightedModel=FALSE</code>) a series of Bernoulli trials is used
+to determine which points within a set of realizations to retain for
+estimating classification accuracy, where the probability of retaining a
+realization is equal to the probability a ground-truthing location
+realization overlaps its corresponding patch type (see <a href="#determining-the-distribution-of-gps-error-and-drawing-random-points">Determining
+the Distribution of GPS Error and Drawing Random Points</a> for more
+details). This approach adds an additional level of uncertainty by using
+the probability of overlap with patch types to subset ground-truthing
+location realizations. If certain patch types are rare in the data, this
+approach can lead to draws with incomplete data sets (e.g., some patch
+types are dropped from the ground-truthing data or remote sensing
+classifications) where one or more patch types are not included in
+accuracy estimates. Instances with incomplete data result in
+reclassified patch types being classified as <code>NA</code> and a
+<code>FALSE</code> in the <code>fullMat</code> vector for the vector
+index that corresponds to that set of location realizations. If some
+realizations have incomplete data sets, <code>nTries</code> can be
+increased to increase the number of attempts used to obtain a full data
+set for each set of realizations. Below is an example of how to subset
+points by probability of overlap with classified patch types using the
+<code>classificationAccuracy_propagateUncertainty</code>.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>propUncert_probSubset <span class="ot">&lt;-</span> <span class="fu">classificationAccuracy_propagateUncertainty</span>(<span class="at">gtShp=</span>substrateLayers[[<span class="st">&#39;gtDom_sf&#39;</span>]],                                                                     <span class="at">remSensShp=</span>substrateLayers[[<span class="st">&#39;sonarClass&#39;</span>]],</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>                                                                     <span class="at">matchMethod=</span><span class="st">&quot;randomPoints&quot;</span>,</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>                                                                     <span class="at">gtSampleID=</span><span class="st">&quot;samplID&quot;</span>, <span class="at">gtPatch=</span><span class="st">&quot;domSub&quot;</span>,</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>                                                                     <span class="at">remSensSampleID=</span><span class="st">&quot;id&quot;</span>,</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>                                                                     <span class="at">remSensPatch=</span><span class="st">&quot;substrate&quot;</span>,</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>                                                                     <span class="at">nDraw=</span><span class="dv">20</span>,</span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>                                                                     <span class="at">nReclass=</span><span class="dv">20</span>, <span class="at">gpsAccuracy=</span><span class="dv">5</span>,</span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a>                                                                     <span class="at">weightedModel=</span><span class="cn">FALSE</span>,</span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a>                                                                     <span class="at">subsetByProb=</span><span class="cn">TRUE</span>)</span></code></pre></div>
+<p>Similar to the random points method, only draws from the modeled
+classification accuracy distribution that were used to reclassify patch
+types are provided in the output:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="fu">round</span>(propUncert_probSubset<span class="sc">$</span>probMats[[<span class="dv">1</span>]], <span class="at">digits=</span><span class="dv">2</span>)</span></code></pre></div>
+<pre><code>##                         prob_Bedrock prob_Boulder prob_Cobble prob_Pebble
+## classified_as_Bedrock           0.00            0        0.00           0
+## classified_as_Boulder           0.00            0        1.00           0
+## classified_as_Cobble            0.00            0        0.00           0
+## classified_as_Pebble            0.02            0        0.05           0
+## classified_as_Gravel            0.00            0        0.00           0
+## classified_as_Sand              0.00            0        0.00           0
+## classified_as_Silt/Clay         0.00            0        0.00           0
+## classified_as_Other             0.00            0        0.00           0
+##                         prob_Gravel prob_Sand prob_Silt/Clay
+## classified_as_Bedrock          0.00         1           0.00
+## classified_as_Boulder          0.00         0           0.00
+## classified_as_Cobble           0.00         1           0.00
+## classified_as_Pebble           0.05         0           0.88
+## classified_as_Gravel           0.00         1           0.00
+## classified_as_Sand             0.00         1           0.00
+## classified_as_Silt/Clay        0.00         1           0.00
+## classified_as_Other            0.00         1           0.00</code></pre>
+<p>Another quick summary of the reclassified data:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="fu">summarizeAreas</span>(<span class="at">propUncert_dt=</span>propUncert_probSubset<span class="sc">$</span>remSensPropUncert, <span class="at">sumPlot=</span><span class="cn">TRUE</span>,</span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>               <span class="at">remSensShp=</span>substrateLayers[[<span class="st">&#39;sonarClass&#39;</span>]], <span class="at">remSensPatchField=</span><span class="st">&quot;substrate&quot;</span>,</span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>               <span class="at">remSensAreaField=</span><span class="st">&quot;area_m2&quot;</span>)</span></code></pre></div>
+<div class="float">
+<img src="data:image/png;base64,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" alt="Figure 5: Box plots showing the distribution of the estimated total area of each patch type for the study area estimated using the subset random points method. The area of each patch type based on the initial classifications is shown by the yellow squares." />
+<div class="figcaption">Figure 5: Box plots showing the distribution of
+the estimated total area of each patch type for the study area estimated
+using the subset random points method. The area of each patch type based
+on the initial classifications is shown by the yellow squares.</div>
+</div>
+<pre><code>##    drawnClass meanTotalArea medianTotalArea x0.025TotalArea x0.05TotalArea
+##        &lt;char&gt;         &lt;num&gt;           &lt;num&gt;           &lt;num&gt;          &lt;num&gt;
+## 1:       Sand     655374.50       563921.64     278217.4477    299037.2444
+## 2:  Silt/Clay     553114.10       633213.83     116802.5728    171807.0075
+## 3:     Cobble     112251.66        99942.08      31324.9708     35401.7955
+## 4:     Gravel     184213.97       167255.53      29216.7573     45061.6966
+## 5:    Bedrock      95502.10        94799.04      17695.6170     27555.1160
+## 6:     Pebble     255537.53       190087.35     115624.0689    115800.2309
+## 7:    Boulder      20763.65        16154.53        436.2165       545.6029
+##    x0.25TotalArea x0.75TotalArea x0.95TotalArea x0.975TotalArea
+##             &lt;num&gt;          &lt;num&gt;          &lt;num&gt;           &lt;num&gt;
+## 1:     494296.609      766382.20     1180367.10      1326865.08
+## 2:     437553.971      708269.66      774334.34       785146.17
+## 3:      55437.001      132561.58      222148.71       247113.61
+## 4:      88920.676      253348.67      324843.79       424636.21
+## 5:      70108.863      113837.02      150733.76       172311.90
+## 6:     137596.872      311371.56      481062.22       645799.59
+## 7:       7753.507       36477.92       47033.61        53824.75</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div id="a-deeper-dive-into-the-methods" class="section level2">
+<h2>A Deeper Dive into the Methods</h2>
+<div id="buffering-and-subsetting-data-based-on-gps-error" class="section level3">
+<h3>Buffering and Subsetting Data Based on GPS Error</h3>
+<p>If ground-truthing data is subset by buffered areas, GPS accuracy
+(<code>gpsAccuracy</code>) at each ground-truthing point is used to
+create a buffered area with a radius equal to the GPS accuracy. If the
+accuracy provided is the distance root mean square error, then the
+buffered area is equivalent to the confidence envelope of a measured
+location. For example, if the reported distance root mean square error
+is at the accuracy level of 0.95, the envelope corresponds to the area
+that contains the true point location 95% of the time (if measured
+repeatedly). For ground-truthing points with a buffered area contained
+within a single patch type, there is a high degree of confidence they
+are within the corresponding patch type and are used to assess the
+accuracy of patch classifications. By default, only ground-truthing
+points with a buffered areas within a single patch type are retained for
+estimating classification accuracy, but that criteria can be relaxed.
+Reducing the <code>proportionOverlap</code> argument in
+<code>classificationAccuracy_propagateUncertainty</code> to be less than
+one will join ground-truthing points to patch types that contain the
+defined proportion of the buffered area within them. Below the
+<code>simPatches</code> function is used to simulate a classified
+polygons (grids) and ground-truthing data. Setting GPS 95% distance root
+mean square error to 5 m, figure 6, provides a visual of the points that
+are retained for estimating classification accuracy.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">385</span>)</span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a></span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a>simPatches <span class="ot">&lt;-</span> <span class="fu">simPatchData</span>(<span class="at">xRange=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">2500</span>), <span class="at">yRange=</span><span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">2500</span>), <span class="at">cellsize=</span><span class="fu">c</span>(<span class="dv">16</span>, <span class="dv">16</span>), <span class="at">crs=</span><span class="st">&quot;EPSG:32617&quot;</span>, <span class="at">nPoints=</span><span class="dv">2500</span>,</span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a>                           patches <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;Bedrock&quot;</span>, <span class="st">&quot;Boulder&quot;</span>, <span class="st">&quot;Cobble&quot;</span>, <span class="st">&quot;Pebble&quot;</span>, <span class="st">&quot;Gravel&quot;</span>, <span class="st">&quot;Sand&quot;</span>, <span class="st">&quot;Silt&quot;</span>, <span class="st">&quot;Other&quot;</span>),</span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a>                           patchProbs <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.03</span>, <span class="fl">0.1</span>, <span class="fl">0.2</span>, <span class="dv">0</span>, <span class="fl">0.3</span>, <span class="fl">0.3</span>, <span class="fl">0.02</span>),</span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a>                           classAccu <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="fu">c</span>(<span class="fl">0.6</span>,  <span class="fl">0.01</span>, <span class="fl">0.05</span>, <span class="fl">0.02</span>, <span class="fl">0.22</span>, <span class="fl">0.05</span>, <span class="fl">0.05</span>, <span class="fl">0.0</span>), <span class="co">#bedrock</span></span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a>                                              <span class="fu">c</span>(<span class="fl">0.01</span>, <span class="fl">0.48</span>, <span class="fl">0.3</span>,  <span class="fl">0.1</span>,  <span class="fl">0.09</span>, <span class="fl">0.01</span>, <span class="fl">0.01</span>, <span class="fl">0.0</span>), <span class="co">#boulder</span></span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a>                                              <span class="fu">c</span>(<span class="fl">0.1</span>,  <span class="fl">0.2</span>,  <span class="fl">0.38</span>, <span class="fl">0.2</span>,  <span class="fl">0.1</span>,  <span class="fl">0.01</span>, <span class="fl">0.01</span>, <span class="fl">0.0</span>), <span class="co">#cobble</span></span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a>                                              <span class="fu">c</span>(<span class="fl">0.05</span>, <span class="fl">0.05</span>, <span class="fl">0.2</span>,  <span class="fl">0.35</span>, <span class="fl">0.2</span>,  <span class="fl">0.1</span>,  <span class="fl">0.05</span>, <span class="fl">0.0</span>), <span class="co">#pebble</span></span>
+<span id="cb22-10"><a href="#cb22-10" tabindex="-1"></a>                                              <span class="fu">c</span>(<span class="fl">0.15</span>, <span class="fl">0.05</span>, <span class="fl">0.1</span>,  <span class="fl">0.2</span>,  <span class="fl">0.25</span>, <span class="fl">0.2</span>,  <span class="fl">0.05</span>, <span class="fl">0.0</span>), <span class="co">#gravel</span></span>
+<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a>                                              <span class="fu">c</span>(<span class="fl">0.1</span>,  <span class="fl">0.05</span>, <span class="fl">0.05</span>, <span class="fl">0.1</span>,  <span class="fl">0.25</span>, <span class="fl">0.35</span>, <span class="fl">0.1</span>,  <span class="fl">0.0</span>), <span class="co">#sand</span></span>
+<span id="cb22-12"><a href="#cb22-12" tabindex="-1"></a>                                              <span class="fu">c</span>(<span class="fl">0.15</span>, <span class="fl">0.01</span>, <span class="fl">0.01</span>, <span class="fl">0.01</span>, <span class="fl">0.02</span>, <span class="fl">0.3</span>,  <span class="fl">0.5</span>,  <span class="fl">0.0</span>), <span class="co">#silt</span></span>
+<span id="cb22-13"><a href="#cb22-13" tabindex="-1"></a>                                              <span class="fu">c</span>(<span class="dv">1</span><span class="sc">/</span><span class="dv">7</span>,  <span class="dv">1</span><span class="sc">/</span><span class="dv">7</span>,  <span class="dv">1</span><span class="sc">/</span><span class="dv">7</span>,  <span class="dv">1</span><span class="sc">/</span><span class="dv">7</span>,  <span class="dv">1</span><span class="sc">/</span><span class="dv">7</span>,  <span class="dv">1</span><span class="sc">/</span><span class="dv">7</span>,  <span class="dv">1</span><span class="sc">/</span><span class="dv">7</span>,  <span class="fl">0.0</span>)  <span class="co">#other</span></span>
+<span id="cb22-14"><a href="#cb22-14" tabindex="-1"></a>                           )</span>
+<span id="cb22-15"><a href="#cb22-15" tabindex="-1"></a>)</span>
+<span id="cb22-16"><a href="#cb22-16" tabindex="-1"></a></span>
+<span id="cb22-17"><a href="#cb22-17" tabindex="-1"></a><span class="co">#create object of buffered points and subset points based on a 95% distance root square error of 5 m for GPS measurements</span></span>
+<span id="cb22-18"><a href="#cb22-18" tabindex="-1"></a>bufferedGT <span class="ot">&lt;-</span> <span class="fu">st_buffer</span>(simPatches<span class="sc">$</span>gtPoints, <span class="at">dist=</span><span class="dv">5</span>)</span>
+<span id="cb22-19"><a href="#cb22-19" tabindex="-1"></a>gtSub <span class="ot">&lt;-</span> <span class="fu">bufferSubset</span>(<span class="at">gtShp=</span>simPatches<span class="sc">$</span>gtPoints, <span class="at">remSensShp=</span>simPatches<span class="sc">$</span>remSensPoly, <span class="at">gtSampleID=</span><span class="st">&quot;gtID&quot;</span>,</span>
+<span id="cb22-20"><a href="#cb22-20" tabindex="-1"></a>                      <span class="at">remSensSampleID=</span><span class="st">&quot;remSensID&quot;</span>, <span class="at">remSensPatch=</span><span class="st">&quot;remSensPatchType&quot;</span>, <span class="at">gpsAccuracy =</span> <span class="dv">5</span>)</span></code></pre></div>
+<div class="float">
+<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAkAAAAJACAMAAABSRCkEAAABSlBMVEUAAAAAADoAAGYAOmYAOpAAZrYhkIwxaI4zMzM1t3k6AAA6ADo6AGY6OgA6OmY6OpA6kJA6kNtEAVREOoNNTU1NTW5NTY5NbqtNjshZWVlmAABmADpmAGZmOgBmOpBmZgBmZmZmkJBmtv9uTU1uTW5uTY5ubo5ubqtujshuq+SOTU2OTW6OTY6Obk2Obm6ObquOjo6OyOSOyP+P10SQOgCQOjqQZgCQkGaQtpCQyMaQ27aQ2/+YtMea27yigKqincGrbk2rbm6rbo6rjk2rjm6ryKur5OSr5P+srKy2ZgC2Zjq225C22/+2/7a2/9u2//++vr7H66LIjk3Ijm7IyI7I///N7d7bkDrb/9vb///f39/kq27kq47k/+Tk///r6+vv7+/95yX+85L/tmb/yI7/25D/27b/29v/5Kv//7b//8j//9v//+T////UgsqCAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAc80lEQVR4nO3d/3/bxn3HcTq1G8Xx2jqhLcFt9kWua8tO54Vxlm5aOrmNq2hfakeNotnMtHWWNloi/v9fh8MdQJA4fLsPiG98vR+JCZ54IEg8dTiAd9TIJ0SQUdsbQPodABFRAEREARARBUBEFAARUQBERAEQEQVARBQAEVEAREQBEBEFQEQUABFRAEREARARBUBEFAARUQBERAEQEQVARBQAEVEAREQBEBEFQEQUABFRAEREARARBUBEFAARUQBERAEQEQVARBQAEVEAREQBEBEFQEQUABFRAEREARARBUBEFAARUQBERAEQEQVARBQAEVEAREQBEBEFQEQUABFRAEREARARBUBEFAARUQBERAEQEQVARBQAEVEAREQBEBEFQEQUABFRAEREARARBUBEFAARUQBERAEQEQVARBQAEVEAREQBEBEFQEQUABFRAEREARARBUBEFAARUeSAflyUVx+45tWfXfPqfde8+jwr3rfWeNHPBa/zY9dYnrMGFFUCoNKArIK82A+AHLM5gD73PC+TD4Bcs0GAlg15S3wA5JrNAqQNhVktB5BbNg5QVgDkFgABSBQAAUgUAAFIFAABSBQAAUgUAAFIFAABSBQAAUgUAAFIFAABSBQAAUjl8vF4+yy5FBfMHpwE/9wf3z3Rj5zdn0Sl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Faun//m7yFbFFZpyc6/ECsutz2xnfRtoCmtcoX5kmRWuO/X2gXTvJmhcffP7MN0LD+Cm/H74mxQcHdSrD9vf4GGzR8HvUvCPywpNub5XZoWl1me2s8YN1IU1rlB1jPbKrXDNqfcQFry8c9P1Cw/WajcEr96Um6bH3Ogq08k0+NXcyzh+F6zQlCfv5a+w5Ppq30BdWN8Klae4fv4K151aAZm2JVwOX706ZxiP90z55VN9o/tApsrOn4KD2qM/2Y/fBSs05cl7+Ssstz6znfVtoCmsb4VhYx5XyV3hurOOFki92PnvEueg0a/PsT40BI3vNDrlvPzb4Nd9/vxX9uN3wQpN+VILlLvCcusz21nfBvqJ0/h6XnHCT8EK1516+0Dn4/ACyjS80a1M+M6Z8uA4rvZz4jpQ8OPwhCLrEkbBCnV5dK/ECsutz2xnfRuYBFTHCnWzNCm1wjWHK9FEFAARUQBERAEQEQVARBQAEVEAREQBEBEFQEQUABFRAEREARARBUBEFAARUQBERAEQEQVARBQAEVEAREQBEBEFQEQUABFRAEREARARBUBEFAARUQBERAEQEQVARBQAEVEAREQBEBEFQEQUABFRAEREARARBUBEFAARUQBERAEQEQVARBQAEVEAREQBEBEFQEQUABFRAEREARARBUBEFAARUQBERAEQEQVARBQAEVEAREQBEBEFQEQUABFRAEREARARBUBEFAARUQBERAEQEQVARBQAEVEAREQBEBEFQEQUABFRAEREARARBUBEFAARUQBERAEQEQVARBQAEVEAREQBEBEFQESU/weKs3rBVx0DVgAAAABJRU5ErkJggg==" alt="A map of simulated patch types (shaded grids) and ground-truthing locations (black dots), with buffered areas based on a 95% distance root mean square error GPS accuracy of 5 m. Buffered areas are shown by the white shaded areas, the fully opaque buffered areas show buffered areas that are within a single patch type, whose corresponding ground-truthing point is retained for estimating classification accuracy." />
+<div class="figcaption">A map of simulated patch types (shaded grids)
+and ground-truthing locations (black dots), with buffered areas based on
+a 95% distance root mean square error GPS accuracy of 5 m. Buffered
+areas are shown by the white shaded areas, the fully opaque buffered
+areas show buffered areas that are within a single patch type, whose
+corresponding ground-truthing point is retained for estimating
+classification accuracy.</div>
+</div>
+</div>
+<div id="determining-the-distribution-of-gps-error-and-drawing-random-points" class="section level3">
+<h3>Determining the Distribution of GPS Error and Drawing Random
+Points</h3>
+<p>Positional errors of measured point coordinates are assumed to follow
+a Rayleigh distribution with a scale (<span class="math inline">\(\sigma\)</span>):</p>
+<p><span class="math inline">\(\sigma = R/ \sqrt(-2 *
+\log(1-accuracyLevel)) \text{ eq. 1}\)</span></p>
+<p>where, <span class="math inline">\(R\)</span> is the horizontal
+radius that encompasses a proportion of the true locations defined by
+<span class="math inline">\(accuracyLevel\)</span> (typically 0.95),
+<span class="math inline">\(R\)</span> is also referred to as the
+distance root mean square error. The scale of the Rayleigh distribution
+is equivalent to a bivariate normal distribution with no correlation
+(analogous to two independent normal distributions). Once <span class="math inline">\(\sigma\)</span> is calculated from the distance
+root mean square error of the GPS accuracy, <span class="math inline">\(N_{draws}\)</span> (defined by user) realizations
+(<span class="math inline">\(j=1...N_{draws}\)</span>) of possible
+locations (<span class="math inline">\(\boldsymbol{X_{i,j}}\)</span>) of
+each ground-truthing point <span class="math inline">\(i\)</span> from a
+bivariate normal distribution:</p>
+<p><span class="math inline">\(\boldsymbol{X_{i,j}} \sim
+normal(\boldsymbol{\mu_{i}} , \boldsymbol{\Sigma_{i}}), \text{ eq.
+2}\)</span>,</p>
+<p>where, <span class="math inline">\(\boldsymbol{\mu_{i}}\)</span> is a
+vector with the recorded x and y coordinates at ground-truthing point
+<span class="math inline">\(i\)</span> and</p>
+<p><span class="math display">\[\begin{equation}
+\boldsymbol{\Sigma_{i}} =
+\begin{pmatrix}
+  \sigma_{i}^2 &amp; 0 \\
+  0 &amp; \sigma_{i}^2
+\end{pmatrix}
+\text{ eq. 3.}
+\end{equation}\]</span></p>
+<p>Once <span class="math inline">\(N_{draws}\)</span> sets of
+ground-truthing location realizations are drawn, the probability
+ground-truthing point <span class="math inline">\(i\)</span> is within
+neighboring patch types (<span class="math inline">\(p_{within_{i,k}}\)</span>) is approximated as the
+proportion of realizations for point <span class="math inline">\(i\)</span> that are within each patch type <span class="math inline">\(k\)</span>.</p>
+<p><span class="math inline">\(p_{within_{i,k}} = n_{i,k}/N_{draws}
+\text{ eq. 4}\)</span></p>
+<p>where, <span class="math inline">\(n_{i,k}\)</span> is the number of
+point realizations for ground-truthing sample <span class="math inline">\(i\)</span> that are within patch type <span class="math inline">\(k\)</span> and <span class="math inline">\(N_{draws}\)</span> is the total number of
+realizations drawn from a bivariate normal distribution with no
+correlation (eq. 2 and 3). A higher value of <span class="math inline">\(N_{draws}\)</span> will produce better
+approximations of the probability ground-truthing points are within each
+patch type.</p>
+<p>Depending on how the point clouds of ground-truthing realizations are
+used to estimate classification accuracy the probability a
+ground-truthing point is within a patch type is used a few different
+ways. The first is to reduce the ground-truthing realizations to unique
+matches with surrounding patch types for each ground-truthing point,
+creating a ground-truthing data set of pseudo-observations (a single
+point matches multiple patch types) where each pseudo-observation is
+assigned a probability of being within its corresponding patch type (eq.
+4). The probability a pseudo-observation is within a corresponding patch
+type is used to weight the pseudo-observation in a multinomial model
+estimating classification accuracy (see <a href="#estimating-classification-accuracy">Estimating Classification
+Accuracy</a> for more details). The weighted model approach allows all
+ground-truthing observations and the probability of being within each
+patch type to be incorporated in the estimation of classification
+accuracy. The second approach is to ignore the calculated probabilities
+and estimate classification accuracy from each set of ground-truthing
+location realizations, yielding <span class="math inline">\(N_{draws}\)</span> estimates of classification
+accuracy. Location realizations for ground-truthing points that occur
+outside the study area or areas without patch classifications are
+dropped from the set of location realizations, thus some sets of
+location realizations my not use all ground-truthing points to estimate
+classification uncertainty. The final approach is similar to the second,
+but adds additional uncertainty by using the probability location
+realization is within its corresponding patch type to determine if that
+individual realization is included in assessment of classification
+accuracy. Here, a Bernoulli trial with a probability of <span class="math inline">\(p_{within_{i,j}}\)</span> is used to determine if
+realization <span class="math inline">\(j\)</span> for point <span class="math inline">\(i\)</span> is retained to estimate classification
+accuracy:</p>
+<p><span class="math inline">\(retain_{i,j} \sim
+Bernoulli(p_{within_{i,j}}) \text{ eq. 5},\)</span></p>
+<p>where <span class="math inline">\(p_{within_{i,j}}\)</span> is the
+probability realization <span class="math inline">\(i,j\)</span> is
+within corresponding patch type <span class="math inline">\(k\)</span>
+(eq. 4).</p>
+</div>
+<div id="estimating-classification-accuracy" class="section level3">
+<h3>Estimating Classification Accuracy</h3>
+<p>Classification accuracy is estimated using a multinomial model with
+ground-truthing observations (or pseudo-observations for weighted
+models) as the response variable and classified patch types as predictor
+variables:</p>
+<p><span class="math inline">\(y_{i} \sim multinomial(\pi_{i},N_{i})
+\text{ eq. 6}\)</span></p>
+<p>where <span class="math inline">\(y_{i}\)</span> is ground-truthing
+observation <span class="math inline">\(i\)</span>, <span class="math inline">\(N_{i}=\sum_{k=1}^r y_{i,k}\)</span> for patch type
+<span class="math inline">\(k\)</span> and <span class="math inline">\(r\)</span> observed patch types, and <span class="math inline">\(\pi_{i} = \{\pi_{i,1}, \pi_{i,2}, \ldots,
+\pi_{i,r}\}\)</span>, with the constraint that <span class="math inline">\(\sum_{k=1}^r \pi_{i,k} = 1\)</span>.</p>
+<p><span class="math inline">\(logit(\pi_{i,k}) =
+log(\frac{\pi_{i,k}}{\pi_{i,1}}) = (X_{i}\boldsymbol{\beta_{k}}) \text{
+eq. 7},\)</span></p>
+<p>for <span class="math inline">\(k=2, \ldots, r\)</span>, where <span class="math inline">\(X_{i}\beta_{k}\)</span> represents a linear
+function with <span class="math inline">\(p\)</span> predictor variables
+for the <span class="math inline">\(k^{th}\)</span> patch type (i.e.,
+<span class="math inline">\(X_{i}\boldsymbol{\beta_{k}} =
+\beta_{k,1}x_{i,1} + \beta_{k,2}x_{i,2} + \ldots +
+\beta_{k,p}x_{i,p}\)</span>). Because classified patch type is the only
+predictor variable supplied to the models of classification accuracy
+(<code>groundTruther</code> does not currently support inclusion of
+other variables as predictors of classification accuracy), <span class="math inline">\(X_{i}\)</span> is a set of dummy variables for the
+<span class="math inline">\(p\)</span> classified patch types, where
+<span class="math inline">\(x_{i,p} = 1\)</span> when classified
+patch<span class="math inline">\(_{i}=p\)</span> and zero otherwise, for
+<span class="math inline">\(p&gt;1\)</span>. Since <span class="math inline">\(\beta_{k,1}\)</span> is an intercept parameter,
+all <span class="math inline">\(x_{i,1}=1\)</span>. To ensure <span class="math inline">\(\pi_{i,k}\)</span> sums to unity, observed patch
+type (outcome) <span class="math inline">\(k=1\)</span> is set as the
+reference group, where</p>
+<p><span class="math inline">\(\pi_{i,1} = \frac{1}{1 + \sum_{l=2}^r
+e^{(X_{i}\boldsymbol{\beta_{l}})}} \text{ eq. 8}\)</span></p>
+<p>and <span class="math inline">\(\boldsymbol{\beta_{l}}\)</span> is a
+vector of coefficients associated with classification <span class="math inline">\(l\)</span> (i.e., classified patch type), thus,
+<span class="math inline">\(\sum_{l=2}^r
+e^{(X_{i}\boldsymbol{\beta_{l}})}\)</span> is a vector of summed
+exponents of coefficient estimates across observed patch types <span class="math inline">\(k=2, \ldots , r\)</span>.</p>
+<p>The remaining probabilities are then:</p>
+<p><span class="math inline">\(\pi_{i,k} =
+\frac{e^{(X_{i}\boldsymbol{\beta_{k}})}}{1 + \sum_{l=2}^r
+e^{(X_{i}\boldsymbol{\beta_{l}})}} \text{ eq. 9},\)</span></p>
+<p>for <span class="math inline">\(k=2, ..., r\)</span>, where <span class="math inline">\(\beta_{k}\)</span> is a vector of coefficients
+when the outcome is patch type <span class="math inline">\(k\)</span>.
+Multinomial models are run using <code>multinom</code> from the
+<code>nnet</code> package.</p>
+<p>The modeling approach is similar for all methods of matching
+ground-truthing data to classified polygons. The primary differences are
+that a single multinomial model is used to estimate classification
+accuracy when a <a href="#buffering-and-subsetting-data-based-on-gps-error">buffered area
+is used to subset ground-truthing points</a> or <a href="#determining-the-distribution-of-gps-error-and-drawing-random-points">pseudo-observations
+are weighted by probability of being within each patch type</a>. If a
+point cloud of possible ground-truthing locations is used to approximate
+the probability individual ground-truthing points overlap surrounding
+classified patch types, the approximated probabilities are used to
+weight pseudo-observations in the multinomial model. If individual sets
+of ground-truthing location realizations are used to estimate
+classification accuracy <a href="#adding-additional-uncertainty-by-assigning-overlap-of-ground-truthing-realizations">with
+subsetting</a> or <a href="#using-multiple-realizations-of-ground-truthing-locations-to-estimate-classification-accuracy">without
+subsetting</a> <span class="math inline">\(N_{draws}\)</span>,
+classification accuracy is estimated <span class="math inline">\(N_{draws}\)</span> times, one for each set of
+ground-truthing location realizations.</p>
+</div>
+<div id="propagating-classification-accuracy" class="section level3">
+<h3>Propagating Classification Accuracy</h3>
+<p>Once classification accuracy has been estimated, classified polygons
+are reclassified using the probability a patch classification
+corresponds to a true patch type. Because classification type is the
+only predictor variable in the multinomial models, probabilities of true
+patch type given a classification, can be condensed to a matrix (<span class="math inline">\(\boldsymbol{P}\)</span>) with <span class="math inline">\(r\)</span> columns and <span class="math inline">\(p\)</span> rows. Instead of using the estimated
+mean probabilities as classification accuracy, the estimated mean (<span class="math inline">\(\mu\)</span>) and standard deviation (<span class="math inline">\(\sigma\)</span>) of the coefficient estimates from
+the multinomial model(s) are used to draw a set of possible
+classification accuracies, assuming the parameters are normally
+distributed (<span class="math inline">\(\beta_{l} \sim normal(\mu,
+\sigma)\)</span>). The coefficients drawn from the model estimates are
+then back-transformed to the probability scale following equations 8 and
+9. A binary design matrix with a row for each classified patch type, is
+supplied to <span class="math inline">\(X_{i}\)</span>, taking the form
+of a <span class="math inline">\(p * p\)</span> dimension matrix with
+the first column of all ones to represent the intercept and a diagonal
+of ones to identify each subsequent classification type:</p>
+<p><span class="math display">\[\begin{equation}
+X =
+\begin{pmatrix}
+  1 &amp; 0 &amp; 0 &amp; \ldots &amp; 0 \\
+  1 &amp; 1 &amp; 0 &amp; \ldots &amp; 0 \\
+  1 &amp; 0 &amp; 1 &amp; \ldots &amp; 0 \\
+  \vdots &amp; \vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+  1 &amp; 0 &amp; 0 &amp; \ldots &amp; 1
+\end{pmatrix}
+\end{equation}\]</span></p>
+<p>When a <a href="#buffering-and-subsetting-data-based-on-gps-error">buffered subset
+of data</a> or <a href="#determining-the-distribution-of-gps-error-and-drawing-random-points">weighted
+model</a> is used estimate classification accuracy, several draws of
+possible coefficients are drawn from the single model used to estimate
+classification accuracy (defined by <code>nReclass</code>). If
+ground-truthing location realizations are used to join ground-truthing
+observations to classified polygons and classification accuracy is
+estimated from each set of location realizations, a single draw of
+possible coefficient estimates is drawn from each of the <span class="math inline">\(N_{draws}\)</span> models (note that
+<code>nReclass</code> can exceed <code>nDraws</code> provided to the
+<code>classificationAccuracy_propagateUncertainty</code>, in which case,
+the sets of location realizations are resampled to produce
+<code>nReclass</code> sets of location realizations and models of
+classification accuracy, with some of the initial sets of location
+realizations being used multiple times). All approaches produce
+<code>nReclass</code> matrices defining classification accuracy (<span class="math inline">\(\boldsymbol{P}\)</span>). The rows of <span class="math inline">\(\boldsymbol{P}_{o}\)</span>, defining the
+probability a classified patch type corresponds to a true patch type,
+are then used to reclassify each polygon from the remote sensing
+classifications for <span class="math inline">\(o^{th}\)</span> draw of
+coefficient estimates:</p>
+<p><span class="math inline">\(reclass_{m,o} \sim
+multinomial(\boldsymbol{P}_{o_{p,*}}, 1) \text{ eq. 10,}\)</span></p>
+<p>where <span class="math inline">\(reclass_{m,o}\)</span> is the
+reclassified patch type for polygon <span class="math inline">\(m\)</span> and <span class="math inline">\(\boldsymbol{P}_{o_{p,*}}\)</span> is the vector of
+probabilities of the true patch type, given the original classification
+<span class="math inline">\(p\)</span> of polygon <span class="math inline">\(m\)</span>.</p>
+</div>
+</div>
+<div id="session-info" class="section level2">
+<h2>Session Info</h2>
+<pre><code>## R version 4.4.1 (2024-06-14 ucrt)
+## Platform: x86_64-w64-mingw32/x64
+## Running under: Windows 11 x64 (build 22631)
+## 
+## Matrix products: default
+## 
+## 
+## locale:
+## [1] LC_COLLATE=English_United States.utf8 
+## [2] LC_CTYPE=English_United States.utf8   
+## [3] LC_MONETARY=English_United States.utf8
+## [4] LC_NUMERIC=C                          
+## [5] LC_TIME=English_United States.utf8    
+## 
+## time zone: America/New_York
+## tzcode source: internal
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+## [1] groundTruther_0.0.0.9000 ggplot2_3.5.1            spsUtil_0.2.2           
+## [4] nnet_7.3-19              mnormt_2.1.1             sf_1.0-16               
+## [7] data.table_1.15.4       
+## 
+## loaded via a namespace (and not attached):
+##  [1] sass_0.4.9         utf8_1.2.4         generics_0.1.3     class_7.3-22      
+##  [5] KernSmooth_2.23-24 stringi_1.8.4      digest_0.6.36      magrittr_2.0.3    
+##  [9] evaluate_0.24.0    grid_4.4.1         fastmap_1.2.0      jsonlite_1.8.8    
+## [13] e1071_1.7-14       DBI_1.2.3          httr_1.4.7         fansi_1.0.6       
+## [17] viridisLite_0.4.2  scales_1.3.0       jquerylib_0.1.4    cli_3.6.3         
+## [21] rlang_1.1.4        crayon_1.5.3       units_0.8-5        munsell_0.5.1     
+## [25] withr_3.0.1        cachem_1.1.0       yaml_2.3.10        tools_4.4.1       
+## [29] dplyr_1.1.4        colorspace_2.1-1   vctrs_0.6.5        R6_2.5.1          
+## [33] proxy_0.4-27       lifecycle_1.0.4    classInt_0.4-10    stringr_1.5.1     
+## [37] pkgconfig_2.0.3    bslib_0.8.0        pillar_1.9.0       gtable_0.3.5      
+## [41] glue_1.7.0         Rcpp_1.0.13        highr_0.11         xfun_0.47         
+## [45] tibble_3.2.1       tidyselect_1.2.1   rstudioapi_0.16.0  knitr_1.48        
+## [49] farver_2.1.2       htmltools_0.5.8.1  labeling_0.4.3     rmarkdown_2.28    
+## [53] compiler_4.4.1</code></pre>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
