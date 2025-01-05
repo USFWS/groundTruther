@@ -64,7 +64,7 @@ drawMultinomProbs <- function(x, nDraws=1, nTries=1000){
     }
     
     if(!rSums1==1 | !allPos==1 | !allLess1==1){
-      warning("Unable to draw matrix of probabilities between 0 and 1 with row sums of 1 for draw ", i, " after ", tries, "attempts.")
+      warning("Unable to draw matrix of probabilities between 0 and 1 with row sums of 1 for draw ", i, " after ", tries, " attempts.")
     } else {
     }
     probMats[[i]] <- prob

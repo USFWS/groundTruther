@@ -53,6 +53,26 @@
 
 bufferSubset <- function(gtShp, remSensShp, crs=NULL, gtSampleID, remSensSampleID, remSensPatch, gpsAccuracy=NULL, gpsAccuracyField=NULL, 
                          proportionOverlap=1){
+  #check that fields in gtShp and remSensShp are unique
+  if(sum(names(gtShp)[!names(remSensShp)=="geometry"] %in% names(remSensShp)[!names(remSensShp)=="geometry"]) > 0){
+    message("At least one field in gtShp and remSensShp have the same name, _gt and _remSens will be added to field names to ensure fields are unique")
+    names(gtShp)[!names(gtShp)=="geometry"] <- paste0(names(gtShp)[!names(gtShp)=="geometry"], "_gt")
+    names(remSensShp)[!names(remSensShp)=="geometry"] <- paste0(names(remSensShp)[!names(remSensShp)=="geometry"], "_remSenShp")
+    
+    gtSampleID <- paste0(gtSampleID, "_gt")
+    
+    remSensSampleID <- paste0(remSensSampleID, "_remSenShp")
+    remSensPatch <- paste0(remSensPatch, "_remSenShp")
+    
+    if(is.null(gpsAccuracyField)){
+      #do nothing
+    } else {
+      gpsAccuracyField <- paste0(gpsAccuracyField, "_gt") 
+    }
+  } else {
+    #do nothing
+  }
+  
   #set up env object for running data.table operations with objects defining field names
   dtEnv <- list(gtSampleID=gtSampleID, remSensSampleID=remSensSampleID, remSensPatch=remSensPatch)
   

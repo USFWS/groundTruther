@@ -85,6 +85,27 @@ classificationAccuracy_propagateUncertainty <- function(gtShp, remSensShp, crs=N
                                                         subsetByProb=FALSE,
                                                         weightedModel=FALSE,
                                                         proportionOverlap=1){
+  #check that fields in gtShp and remSensShp are unique
+  if(sum(names(gtShp)[!names(remSensShp)=="geometry"] %in% names(remSensShp)[!names(remSensShp)=="geometry"]) > 0){
+    message("At least one field in gtShp and remSensShp have the same name, _gt and _remSens will be added to field names to ensure fields are unique")
+    names(gtShp)[!names(gtShp)=="geometry"] <- paste0(names(gtShp)[!names(gtShp)=="geometry"], "_gt")
+    names(remSensShp)[!names(remSensShp)=="geometry"] <- paste0(names(remSensShp)[!names(remSensShp)=="geometry"], "_remSenShp")
+    
+    gtSampleID <- paste0(gtSampleID, "_gt")
+    gtPatch <- paste0(gtPatch, "_gt")
+    
+    remSensSampleID <- paste0(remSensSampleID, "_remSenShp")
+    remSensPatch <- paste0(remSensPatch, "_remSenShp")
+    
+    if(is.null(gpsAccuracyField)){
+      #do nothing
+    } else {
+      gpsAccuracyField <- paste0(gpsAccuracyField, "_gt") 
+    }
+  } else {
+    #do nothing
+  }
+  
   #set up env object for running data.table operations with objects defining field names
   dtEnv <- list(gtSampleID=gtSampleID, gtPatch=gtPatch, remSensSampleID=remSensSampleID, remSensPatch=remSensPatch, gpsAccuracyField=gpsAccuracyField)
   
@@ -162,7 +183,7 @@ classificationAccuracy_propagateUncertainty <- function(gtShp, remSensShp, crs=N
     dimnames(meanProbs)[[1]] <- paste0("classified_as_", mn$xlevels[[1]])
     dimnames(meanProbs)[[2]] <- paste0("prob_", dimnames(meanProbs)[[2]])
     
-    probMats <- drawMultinomProbs(mn, nDraws=nDraws)
+    probMats <- drawMultinomProbs(mn, nDraws=nReclass)
   }
   #end matchMethod=="bufferedSubset"
   
