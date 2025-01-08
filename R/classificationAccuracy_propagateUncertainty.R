@@ -110,7 +110,7 @@ classificationAccuracy_propagateUncertainty <- function(gtShp, remSensShp, crs=N
   dtEnv <- list(gtSampleID=gtSampleID, gtPatch=gtPatch, remSensSampleID=remSensSampleID, remSensPatch=remSensPatch, gpsAccuracyField=gpsAccuracyField)
   
   #ensure levels of gtPatch and remSensPatch match
-  stopifnot(class(gtShp[[gtPatch]])=="factor" | class(remSensShp[[remSensPatch]])=="factor")
+  stopifnot(class(gtShp[[gtPatch]])=="factor" & class(remSensShp[[remSensPatch]])=="factor")
   
   #other checks
   stopifnot(matchMethod %in% c("randomPoints", "bufferedSubset"))
