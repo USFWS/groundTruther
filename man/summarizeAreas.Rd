@@ -36,7 +36,7 @@ summarizeAreas(
 \item{summarizeBY}{The field name that identifies the variable to summarize the area of patch types by. If \code{NULL} (the default), a summary is provided for the total study area.}
 }
 \value{
-A \link[data.table]{data.table} summarizing the total area of patch types as the mean, median, and 0.025, 0.05, 0.25, 0.75, 0.95, and 0.975 quantiles across sets of patch reclassifications produced by \link{classificatonAccuracy_propogateUncertainty}. If \code{sumPlot=TRUE} a boxplot of summarizing the distribution of total areas of patch types across sets of patch reclassifications is also produced.
+A \link[data.table]{data.table} summarizing the total area of patch types as the mean, median, and 0.025, 0.05, 0.25, 0.75, 0.95, and 0.975 quantiles across sets of patch reclassifications produced by \link{classificatonAccuracy_propogateUncertainty}. If \code{sumPlot=TRUE} a violin plot summarizing the median, interquartile range, and distribution of total areas of patch types across sets of patch reclassifications is also produced.
 }
 \description{
 Summarizes the total area of reclassified patch types.

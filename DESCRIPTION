@@ -24,7 +24,7 @@ Depends:
   	ggplot2 (>= 3.5.1),
     R (>= 4.4.1)
 Imports:
-	prioritizr (>= 8.0.4)
+	prioritizr (>= 8.0.4),
 	terra (>= 1.7-78)
 LazyData: true
 Suggests: 

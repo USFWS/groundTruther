@@ -12,7 +12,7 @@ In addition to quantifying uncertainty in patch classifications derived from rem
 
 Here we take advantage of the `simPatchData` function in `groundTruthter` and simulation tools available in the `prioritizr` package (note that `prioritizr` and `terra` are not included as dependencies in `groundTruther` and thus are not loaded with `groundTruther`) to simulate substrate patch classifications, water depths, and water velocities to calculate habitat suitability for the mythical river creature [Altamaha-ha](https://en.wikipedia.org/wiki/Altamaha-ha) or Altie for short. For the purpose of the example, we'll assume that Altie prefers areas of the river with coarse substrates, moderate depths, and moderate velocities.
 
-```{r, load package, message=F, eval=F}
+```{r, load package, message=FALSE}
 library("groundTruther")
 library("prioritizr")
 library("terra")
