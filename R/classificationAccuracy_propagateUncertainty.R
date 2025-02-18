@@ -86,10 +86,12 @@ classificationAccuracy_propagateUncertainty <- function(gtShp, remSensShp, crs=N
                                                         weightedModel=FALSE,
                                                         proportionOverlap=1){
   #check that fields in gtShp and remSensShp are unique
-  if(sum(names(gtShp)[!names(remSensShp)=="geometry"] %in% names(remSensShp)[!names(remSensShp)=="geometry"]) > 0){
+  gtGeo <- attr(gtShp, "sf_column")
+  remSensGeo <- attr(remSensShp, "sf_column")
+  if(sum(names(gtShp)[!names(gtShp)==gtGeo] %in% names(remSensShp)[!names(remSensShp)==remSensGeo]) > 0){
     message("At least one field in gtShp and remSensShp have the same name, _gt and _remSens will be added to field names to ensure fields are unique")
-    names(gtShp)[!names(gtShp)=="geometry"] <- paste0(names(gtShp)[!names(gtShp)=="geometry"], "_gt")
-    names(remSensShp)[!names(remSensShp)=="geometry"] <- paste0(names(remSensShp)[!names(remSensShp)=="geometry"], "_remSenShp")
+    names(gtShp)[!names(gtShp)==gtGeo] <- paste0(names(gtShp)[!names(gtShp)==gtGeo], "_gt")
+    names(remSensShp)[!names(remSensShp)==remSensGeo] <- paste0(names(remSensShp)[!names(remSensShp)==remSensGeo], "_remSenShp")
     
     gtSampleID <- paste0(gtSampleID, "_gt")
     gtPatch <- paste0(gtPatch, "_gt")
@@ -110,7 +112,7 @@ classificationAccuracy_propagateUncertainty <- function(gtShp, remSensShp, crs=N
   dtEnv <- list(gtSampleID=gtSampleID, gtPatch=gtPatch, remSensSampleID=remSensSampleID, remSensPatch=remSensPatch, gpsAccuracyField=gpsAccuracyField)
   
   #ensure levels of gtPatch and remSensPatch match
-  stopifnot(class(gtShp[[gtPatch]])=="factor" & class(remSensShp[[remSensPatch]])=="factor")
+  stopifnot(class(gtShp[[gtPatch]])=="factor" | class(remSensShp[[remSensPatch]])=="factor")
   
   #other checks
   stopifnot(matchMethod %in% c("randomPoints", "bufferedSubset"))

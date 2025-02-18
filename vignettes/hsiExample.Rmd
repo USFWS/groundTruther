@@ -1,0 +1,206 @@
+---
+title: "Incorporating groundTruther with Habitat Suitability Indices"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+## Overview
+
+In addition to quantifying uncertainty in patch classifications derived from remote sensing data, `groundTruther` provides output for inclusion in subsequent analyses, such as incorporating estimates of classification accuracy as priors in Bayesian models or utilizing patch reclassifications in calculations of habitat suitability to provide a range of suitable habitat available to focal species. This vignette provides an example of how patch reclassifications can get incorporated into the calculation of a habitat suitability index (HSI). HSIs standardize habitat components (e.g., substrate type, depth, water velocity) as suitability scores and compile the suitability scores for each metric into an overall habitat suitability score to provide an indication of if an area or areas can support the focal species. Typically, HSIs assume information on individual habitat components is known with perfect knowledge and report a single value for a given location. However, information on habitat layers is seldom perfect, thus HSIs (and similar analyses) that assume perfect knowledge do not retain underlying uncertainties in end products. Propagating classification uncertainties provides a range of probable patch compositions for use in calculating HSIs, allowing classification uncertainty to be preserved and accounted for when interpreting end products (e.g., suitability maps), leading to more informed decisions based on the end products.
+
+## Loading Libraries and Simulating Data
+
+Here we take advantage of the `simPatchData` function in `groundTruthter` and simulation tools available in the `prioritizr` package (note that `prioritizr` and `terra` are not included as dependencies in `groundTruther` and thus are not loaded with `groundTruther`) to simulate substrate patch classifications, water depths, and water velocities to calculate habitat suitability for the mythical river creature [Altamaha-ha](https://en.wikipedia.org/wiki/Altamaha-ha) or Altie for short. For the purpose of the example, we'll assume that Altie prefers areas of the river with coarse substrates, moderate depths, and moderate velocities.
+
+```{r, load package, message=F, eval=F}
+library("groundTruther")
+library("prioritizr")
+library("terra")
+```
+
+First we simulate the substrate classifications in our hypothetical river system.
+
+```{r, sim patch data, warning=FALSE}
+set.seed(385)
+
+simPatches <- simPatchData(xRange=c(0, 1000), yRange=c(0, 75), cellsize=c(5, 5), crs="EPSG:32617", nPoints=2500,
+                           patches <- c("Bedrock", "Boulder", "Cobble", "Pebble", "Gravel", "Sand", "Silt"),
+                           patchProbs <- c(0.06, 0.04, 0.1, 0.2, 0, 0.3, 0.3),
+                           classAccu <- rbind(c(0.6,  0.01, 0.05, 0.02, 0.22, 0.05, 0.05), #bedrock
+                                              c(0.01, 0.48, 0.3,  0.1,  0.09, 0.01, 0.01), #boulder
+                                              c(0.1,  0.2,  0.38, 0.2,  0.1,  0.01, 0.01), #cobble
+                                              c(0.05, 0.05, 0.2,  0.35, 0.2,  0.1,  0.05), #pebble
+                                              c(0.15, 0.05, 0.1,  0.2,  0.25, 0.2,  0.05), #gravel
+                                              c(0.1,  0.05, 0.05, 0.1,  0.25, 0.35, 0.1), #sand
+                                              c(0.15, 0.01, 0.01, 0.01, 0.02, 0.3,  0.5) #silt
+                           )
+)
+
+ggplot()+
+  geom_sf(data=simPatches$remSensPoly, aes(fill=remSensPatchType), color="grey") +
+  scale_fill_viridis_d() +
+  labs(fill="Classified\nPatch Type") +
+  coord_sf(datum = st_crs("EPSG:32617"))
+```
+
+Next we will simulate water depths and velocities, assuming spatial auto-correlation.
+
+```{r, sim dep and vel data, warning=FALSE}
+templete <- rast(vect(simPatches$remSensPoly), resolution=c(1,1))
+areaRaster <- rasterize(x=simPatches$remSensPoly, y=templete, field="remSensPatchID")
+depRast <- simulate_data(areaRaster, intensity=3, sd=2, n=1, scale=0.2, transform=abs)
+velRast <- simulate_data(areaRaster, intensity=0.5, n=1, scale=0.2, transform=abs)
+
+#change field names to something more meaningful
+names(depRast) <- "dep"
+names(velRast) <- "vel"
+```
+
+```{r, plot depths, fig.height=2}
+plot(depRast, plg=list(at=c(0, 4, 8, 12)))
+```
+
+```{r, plot vel, fig.height=2}
+plot(velRast, plg=list(at=c(0, 2, 4, 6)))
+```
+
+
+## Assesses Classification Accuracy and Propagating Uncertainty
+
+With the data simulated, we can now assess our classification accuracy of the simulated substrate classifications using the `classificationAccuracy_propagateUncertainty` function. For this example, we will use the buffered area approach to subset the ground-truthing data set to only contain points where there is a high degree of confidence they are within a corresponding classified patch. We'll assume the ground-truthing locations were measured on a GPS with an accuracy of 1 m. To reduce computational burden, we've limited the number of patch reclassifications to 100, but in practice, the number of reclassifications required to fully capture classification uncertainty will likely be much higher.
+
+```{r, classification accuracy and uncertainty}
+propUncert_subset <- classificationAccuracy_propagateUncertainty(gtShp=simPatches$gtRemSensJoin,
+                                                                 remSensShp=simPatches$remSensPoly,
+                                                                 matchMethod="bufferedSubset",
+                                                                 gtSampleID="gtID", gtPatch="gtPatchType",
+                                                                 remSensSampleID="remSensID", remSensPatch="remSensPatchType",
+                                                                 nReclass=100, gpsAccuracy=1)
+```
+
+There are a few warnings indicating that some fields have been renamed to avoid duplicate field names in the ground-truthing and remote sensing data sets, prompts for users to ensure matching crs for the data sets, and indications that not all substrate types were recorded in both data sets. We can ignore those for now.
+
+## Convert Data To Suitability Scores
+
+Once the patch types have been reclassified, they will need to be converted to suitability scores. The hypothetical suitability scores for each patch type are included in the altieHSI data, allowing the suitability score of each patch type to be merged to the reclassified patch types.
+
+```{r, convert patches to HSI, fig.height=2}
+data(altieHSI)
+
+#plots of the suitability scores
+ggplot(altieHSI[HabitatVariable=="Substrate"], aes(x=Classification, y=SuitabilityIndex)) +
+  geom_bar(stat="identity") +
+  labs(x="Substrate", y="Suitability Score")
+ggplot(altieHSI[HabitatVariable=="Water Depth (m)"], aes(x=Value, y=SuitabilityIndex)) +
+  geom_line() +
+  labs(x="Water Depth (m)", y="Suitability Score")
+ggplot(altieHSI[HabitatVariable=="Water Velocity (m/s)"], aes(x=Value, y=SuitabilityIndex)) +
+  geom_line() +
+  labs(x="Water Velocity (m/s)", y="Suitability Score")
+
+propSubUncert <- merge(propUncert_subset$remSensPropUncert, altieHSI, by.x="drawnClass", by.y="Classification")
+```
+
+Similarly, depth and velocity rasters need to be converted to suitability scores. Because depth and velocity rasters represent continuous data whose suitability scores follow an irregular curve, breakpoints will need to be used to convert the depth and velocity values into suitability scores. Well take advantage of the `classify` function in `terra`, which will update raster values based on breakpoints provided in a classification matrix.
+
+```{r, convert rasters to SI}
+makeRCMat <- function(values, maxValue, RCvalues){
+  as.matrix(data.frame(from=values, to=c(values[2:length(values)], maxValue), becomes=RCvalues), ncol=3)
+}
+depRC <- makeRCMat(values = altieHSI[HabitatVariable=="Water Depth (m)", Value],
+                        maxValue = max(minmax(depRast)['max',], altieHSI[HabitatVariable=="Water Depth (m)", Value])+1,
+                        RCvalues = altieHSI[HabitatVariable=="Water Depth (m)", SuitabilityIndex])
+velRC <- makeRCMat(values = altieHSI[HabitatVariable=="Water Velocity (m/s)", Value],
+                        maxValue = max(minmax(velRast)['max',], altieHSI[HabitatVariable=="Water Velocity (m/s)", Value])+1,
+                        RCvalues = altieHSI[HabitatVariable=="Water Velocity (m/s)", SuitabilityIndex])
+
+depSI <- classify(depRast, depRC)
+velSI <- classify(velRast, velRC)
+```
+
+Before an overall HSI score is calculated the cells of the depth and velocity rasters are matched to the classified polygons they are within. Here the suitability scores for each patch type are transposed to an array with a column for each set of reclassifications and a row for each classified patch. The patch IDs are then converted to a raster to obtain the x and y coordinates of each cell of the depth and velocity rasters that are within a patch. The raster of patch IDs is then converted to a data.table along with the depth and velocity rasters for calculating the overall HSI score. Retaining patch ID may not always be necessary, but since some applications may require tracking individual patches, we'll retain patch ID when calculating the overall HSI.
+
+```{r, match patch polygons to raster cells}
+#create column for casting with reclassID prefix for convinence
+propSubUncert[, reClassID_col := paste("reClassID", reClassID, sep="_")]
+#recast data and append geometry info
+subSI <- dcast(propSubUncert, remSensID_remSenShp ~ reClassID_col, value.var="SuitabilityIndex")
+subSI_sf <- merge(simPatches$remSensPoly[, "remSensID"], subSI, by.x="remSensID", by.y="remSensID_remSenShp")
+
+#convert to raster
+subPolyID <- rasterize(x=subSI_sf, y=velRast, field="remSensID")
+#convert raster to data.table to index cells within the study area
+subPolyIndex <- na.omit(as.data.table(subPolyID, xy=TRUE))
+
+#convert depth and velocity SI rasters to data.table
+depDT <- na.omit(as.data.table(depSI, xy=TRUE))
+velDT <- na.omit(as.data.table(velSI, xy=TRUE))
+```
+
+Once patch IDs are converted the habitat overall habitat suitability is calculated. Here we'll assume a weighted average approximates the overall suitability of an area for Altie, where substrate contributes to 50% of the overall suitability, velocity 40%, and depth the remaining 10%. Notice that only a single set of depth and velocity estimates are used to calculate HSI, for this example we are assuming they are derived from a deterministic flow model. If uncertainty around depth and velocity estimates is quantified, that uncertainty could be propagated into several realizations of possible depth and water velocities using a similar approach to propagate uncertainty in substrate patch types. 
+
+```{r, overall HSI}
+#merge polygon index with depth and velocity suitability scores
+indexedSI <- merge(merge(subPolyIndex, depDT, by=c("x", "y")), velDT, by=c("x", "y"))
+setnames(indexedSI, c("dep", "vel"), c("depSI", "velSI"))
+
+#create list to hold HSI calculations for each set of patch reclassifications
+hsiList <- vector("list", length=ncol(subSI)-1)
+for(i in seq_along(hsiList)){
+  #convert patch suitability scores to raster to obtain x and y data for raster cells each polygon contains
+  subRast <- rasterize(x=subSI_sf, y=velRast, field=paste("reClassID", i, sep="_"))
+  #convert raster back to data.table with x y data
+  subDT <- na.omit(as.data.table(subRast, xy=TRUE))
+  setnames(subDT, paste("reClassID", i, sep="_"), "subSI")
+  
+  #merge substrate suitability scores with depth and velocity suitability scores
+  hsi <- merge(indexedSI, subDT, by=c("x", "y"))
+  
+  #calculate hsi
+  hsi[ , HSI := (subSI * 0.5) + (velSI * 0.4) + (depSI * 0.1)]
+  hsi[, reClassID := i]
+  
+  hsiList[[i]] <- hsi
+}
+
+overallHSI <- do.call('rbind', hsiList)
+```
+
+For comparison, we will also calculate the HSI scores under the false assumption that the initial patch classifications were perfect.
+
+```{r, perfect classifications}
+perfectClassSI <- merge(simPatches$remSensPoly, altieHSI, by.x="remSensPatchType", by.y="Classification")
+perfectClassRast <- rasterize(x=perfectClassSI, y=velRast, field="SuitabilityIndex")
+perfectClassDT <- na.omit(as.data.table(perfectClassRast, xy=TRUE))
+perfectClassHSI <- merge(indexedSI, perfectClassDT, by=c("x", "y"))
+perfectClassHSI[ , HSI := (SuitabilityIndex * 0.5) + (velSI * 0.4) + (depSI * 0.1)]
+```
+
+The HSI scores can be used as is or converted to classes describing habitat quality. Here we will convert the overall HSI scores to good, moderate, and poor habitat. With good habitat considered an HSI score of 0.8 or greater, poor habitat quality an HSI score less than 0.3, and moderate habitat anything in between.
+
+```{r, convert to suitability groups}
+overallHSI[, habQuality := ifelse(HSI>=0.8, "Good", ifelse(HSI>=0.3, "Moderate", "Poor"))]
+perfectClassHSI[, habQuality := ifelse(HSI>=0.8, "Good", ifelse(HSI>=0.3, "Moderate", "Poor"))]
+```
+
+```{r, comparison plot}
+#summarize the area of hsi by each set of reclassifications, since the cell size of the rasters is 1, this is just a count of the number of cells in each habitat quality class
+totAreas <- overallHSI[, .N, by=list(habQuality, reClassID)]
+totAreaSummary <- totAreas[, list(medianArea=median(N), q25Area=quantile(N, 0.25), q75Area=quantile(N, 0.75)), by=habQuality]
+
+areaPerfectClass <- perfectClassHSI[, .N, by=habQuality]
+
+ggplot(totAreas, aes(x=habQuality, y=N)) +
+  geom_violin() +
+  geom_pointrange(data=totAreaSummary, aes(x=habQuality, y=medianArea, ymin=q25Area, ymax=q75Area)) +
+  geom_point(data=areaPerfectClass, aes(x=habQuality, y=N), size=2, fill="yellow", shape=22) +
+  labs(y="Area (sq. m)", x="Habitat Quality")
+```
+
+The above plot shows the median expected area of good, moderate, and poor quality habitat (black dots), the interquartile range of the estimated areas (vertical lines), and the distribution of the estimated areas. In this example, the area of each suitability class assuming perfect detection (yellow squares) is within the expected distributions that account for classification accuracy. However, there is some deviation from the median expectation for moderate and poor quality habitat. The amount of good habitat assuming perfect classification is close to the median expectation that accounts for classification accuracy, however, the availability of uncertainty data adds information that could be useful for inference and decision making. For instance, if a minimum area of 7,500 square m is required to support Altie, there is less confidence that this system could support Altie and future directions may involve additional assessments to reduce uncertainty or restoration of degraded habitat.
+
+## Session Info
+
+```{r session info, echo=FALSE}
+sessionInfo()
+```

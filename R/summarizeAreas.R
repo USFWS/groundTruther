@@ -11,7 +11,7 @@
 #' @param remSensAreaField The field name that identifies the area of polygons in the in shapefile supplied to \code{remSensShp}. Only required if an object is supplied to \code{remSensShp}.
 #' @param summarizeBY The field name that identifies the variable to summarize the area of patch types by. If \code{NULL} (the default), a summary is provided for the total study area.
 #' @details Note that this function assumes the area units of \code{areaField} and \code{remSensAreaField} are equal. Users must ensure area units are equal for objects supplied to \code{propUncert_dt} and \code{remSensShp}.
-#' @return A \link[data.table]{data.table} summarizing the total area of patch types as the mean, median, and 0.025, 0.05, 0.25, 0.75, 0.95, and 0.975 quantiles across sets of patch reclassifications produced by \link{classificatonAccuracy_propogateUncertainty}. If \code{sumPlot=TRUE} a boxplot of summarizing the distribution of total areas of patch types across sets of patch reclassifications is also produced. 
+#' @return A \link[data.table]{data.table} summarizing the total area of patch types as the mean, median, and 0.025, 0.05, 0.25, 0.75, 0.95, and 0.975 quantiles across sets of patch reclassifications produced by \link{classificatonAccuracy_propogateUncertainty}. If \code{sumPlot=TRUE} a violin plot summarizing the median, interquartile range, and distribution of total areas of patch types across sets of patch reclassifications is also produced. 
 #' @export
 #' @examples
 #' data(substrateLayers)
@@ -68,13 +68,15 @@ summarizeAreas <- function(propUncert_dt, patchType="drawnClass", areaField="are
   if(sumPlot==TRUE){
     if(is.null(remSensShp) | is.null(remSensPatchField) | is.null(remSensAreaField)){
       p1 <- ggplot(simAreaByIterClass, aes(x=get(patchType), y=V1)) +
-        geom_boxplot() +
+        geom_violin() +
+        geom_pointrange(data=simAreaByClass, aes(x=get(patchType), ymin=x0.25TotalArea, ymax=x0.75TotalArea, y=medianTotalArea)) +
         labs(y=areaField, x=patchType)
     } else {
       remSensShp <- data.table(remSensShp)
       
       p1 <- ggplot(simAreaByIterClass, aes(x=get(patchType), y=V1)) +
-        geom_boxplot() +
+        geom_violin() +
+        geom_pointrange(data=simAreaByClass, aes(x=get(patchType), ymin=x0.25TotalArea, ymax=x0.75TotalArea, y=medianTotalArea)) +
         labs(y=areaField, x=patchType) +
         geom_point(data=remSensShp[, sum(remSensAreaField, na.rm=TRUE), 
                                    by=list(remSensPatchField), 
