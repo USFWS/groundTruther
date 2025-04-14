@@ -128,17 +128,10 @@ classificationAccuracy_propagateUncertainty <- function(gtShp, remSensShp, crs=N
                                           gpsAccuracy=gpsAccuracy, gpsAccuracyField=gpsAccuracyField, accuracyLevel=accuracyLevel,
                                           subsetByProb=subsetByProb)
     
-    # setnames(pointCloud_list$gtRemSens_dt, old=c("gtSampleID", "gtPatch", "remSensPatch"), new=c(gtSampleID, gtPatch, remSensPatch))     
-    # pointCloud_list$gtRemSens <- st_as_sf(pointCloud_list$gtRemSens_dt)
-    
     if(weightedModel==TRUE){
       joined_dt <- data.table(pointCloud_list$gtRemSens)
       uniqueMatches <- joined_dt[!is.na(remSensPatch) & !is.na(gtPatch), mean(prob), by=list(gtSampleID, gtPatch, remSensPatch), env=dtEnv]
       mn_weighted <- quiet(multinom(reformulate(termlabels=remSensPatch, response=gtPatch), weights=V1, uniqueMatches), warning=FALSE)
-      
-      # mn_weighted <- weightedAccuracy(joined=joined_dt, gtSampleID=gtSampleID, gtPatch=gtPatch,
-      #                                 remSensPatch=remSensPatch, prob="prob",
-      #                                 gtPatches=gtPatchTypes)
       
       #calculate mean classification accuracy
       weightedProbs <- predict(mn_weighted, mn_weighted$xlevels, type="probs")
