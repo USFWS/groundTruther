@@ -1,7 +1,14 @@
 ---
 title: "Incorporating groundTruther with Habitat Suitability Indices"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  rmarkdown::html_vignette:
+    toc: yes
+    toc_depth: 4
+vignette: >
+  %\VignetteIndexEntry{Incorporating groundTruther with Habitat Suitability Indices}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ## Overview
