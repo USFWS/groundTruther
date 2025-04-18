@@ -1,6 +1,6 @@
 Package: groundTruther
 Title: Propagate Uncertainty of Remote Sensing Patch Classifications
-Version: 0.0.1.2000
+Version: 0.0.1.3000
 Description: Provides several methods to account for positional errors when 
     spatially joining ground-truthing with remote sensing patch classifications. 
 	The joined data set is used to estimate the accuracy of patch type (e.g., land 
