@@ -1,17 +1,17 @@
 Package: groundTruther
 Title: Propagate Uncertainty of Remote Sensing Patch Classifications
-Version: 0.0.2.1000
-Authors@R: 
-    person("Jason", "Fischer", email = "jason_fischer@fws.gov", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0001-7226-6500"))
+Version: 0.0.2.2000
+Authors@R: c(
+	person("Jason", "Fischer", email = "jason_fischer@fws.gov", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-7226-6500")),
 	person("Robert", "Hunter", email = "rhunter@usgs.gov", role = c("ctb"),
-	           comment = c(ORCID = "0000-0002-6021-4479"))
+	           comment = c(ORCID = "0000-0002-6021-4479")),
 	person("Jesse", "McCarter", email = "jesse_mccarter@fws.gov", role = c("ctb"),
-	           comment = c(ORCID = "0000-0002-0222-939X"))
+	           comment = c(ORCID = "0000-0002-0222-939X")),
 	person("Matthew", "Acre", email = "macre@usgs.gov", role = c("ctb"),
-	           comment = c(ORCID = "0000-0002-5417-9523"))
+	           comment = c(ORCID = "0000-0002-5417-9523")),
 	person("Sophia", "Bonjour", email = "sbonjour@usgs.gov", role = c("ctb"),
-	           comment = c(ORCID = "0000-0003-3614-7023"))			   
+	           comment = c(ORCID = "0000-0003-3614-7023")))			   
 Description: Provides several methods to account for positional errors when 
     spatially joining ground-truthing with remote sensing patch classifications. 
 	The joined data set is used to estimate the accuracy of patch type (e.g., land 

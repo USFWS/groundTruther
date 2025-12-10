@@ -43,7 +43,7 @@ survey points are near patch edges.}
 
 \item{sampleDesign}{Should survey points be placed randomly
 (\code{sampleDesign="random"}) or with a stratified random design
-(\code{sampleDesign="stratified random"}).}
+(\code{sampleDesign="stratified random"}). Defaults to stratified random.}
 
 \item{sampAllocation}{If a stratified random approach is used to determine
 survey locations, should an optimum or proportionate allocation allocation
@@ -54,11 +54,7 @@ standard deviation of patch area to minimize variance. If
 patch types with a proportionate allocation. The Neyman allocation has the
 advantage of taking number and size variation of patches into account, but
 may under allocate samples to patch types with few observations or low
-variability in size.
-@details Survey points are placed with either a random or stratified
-random sampling design and limited to areas that are a user defined
-distance or more from patch edges, to reduce potential for co-registration
-errors in ground-truthing surveys.}
+variability in size. Defaults to optimum sample allocation.}
 }
 \value{
 A shapefile of class \code{sf} with x and y coordinates for a user
@@ -67,6 +63,12 @@ defined number of randomly or stratified randomly drawn survey locations.
 \description{
 Assists with designing ground-truthing surveys by drawing locations to
 conduct ground-truthing data collection.
+}
+\details{
+Survey points are placed with either a random or stratified
+random sampling design and limited to areas that are a user defined
+distance or more from patch edges, to reduce potential for co-registration
+errors in ground-truthing surveys.
 }
 \examples{
 data(substrateLayers)

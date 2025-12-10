@@ -8,4 +8,16 @@
 \description{
 Provides several methods to account for positional errors when spatially joining ground-truthing with remote sensing patch classifications. The joined data set is used to estimate the accuracy of patch type (e.g., land cover, substrate type, habitat type) classifications derived from the remote sensing data. The estimated classification accuracy is then used to reclassify the original patch classifications several times to account for uncertainty in the accuracy of the original classifications. The output of allows users to the accuracy and uncertainty of patch classifications and to propagate classification uncertainty in products developed from the remote sensing classifications (e.g., habitat maps and suitabilitiy indicies).
 }
+\author{
+\strong{Maintainer}: Jason Fischer \email{jason_fischer@fws.gov} (\href{https://orcid.org/0000-0001-7226-6500}{ORCID})
+
+Other contributors:
+\itemize{
+  \item Robert Hunter \email{rhunter@usgs.gov} (\href{https://orcid.org/0000-0002-6021-4479}{ORCID}) [contributor]
+  \item Jesse McCarter \email{jesse_mccarter@fws.gov} (\href{https://orcid.org/0000-0002-0222-939X}{ORCID}) [contributor]
+  \item Matthew Acre \email{macre@usgs.gov} (\href{https://orcid.org/0000-0002-5417-9523}{ORCID}) [contributor]
+  \item Sophia Bonjour \email{sbonjour@usgs.gov} (\href{https://orcid.org/0000-0003-3614-7023}{ORCID}) [contributor]
+}
+
+}
 \keyword{internal}
