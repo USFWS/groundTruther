@@ -1,6 +1,6 @@
 Package: groundTruther
 Title: Propagate Uncertainty of Remote Sensing Patch Classifications
-Version: 0.0.2.2000
+Version: 0.0.3.1000
 Authors@R: c(
 	person("Jason", "Fischer", email = "jason_fischer@fws.gov", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-7226-6500")),

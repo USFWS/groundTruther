@@ -10,7 +10,8 @@
 #' @param nPatches Number of ground-truthing points to survey. Omit if
 #'\code{nProportion} is provided.
 #' @param nProportion Proportion of classified patches to receive ground-truthing
-#' points to survey. Omit if \code{nPatches} is provided.#' 
+#' points to survey, based on the number of patches that meet \code{distThreshold}
+#' requirements. Omit if \code{nPatches} is provided.
 #' @param nCluster Number of points to sample within each randomly selected patch.
 #' If 1 (default) cluster sampling is not conducted, if greater than 1, cluster
 #' sampling is conducted with the number of sub samples in each randomly or 
@@ -84,7 +85,7 @@ surveyPoints <- function(remSensShp, remSensPatch, nPatches=NULL, nProportion=NU
   
   #calculate number of points to retain if nProportion supplied
   if(!is.null(nProportion)){
-    nPatches <- nrow(remSensShp) * nProportion
+    nPatches <- nrow(xBufferRemaining) * nProportion
   } else {
     if(nPatches > nrow(xBufferRemaining)){
       warning("nPatches exceeds number of patches with interior points greater than distThreshold from perimeter, nPatches being reduced. Change nPatches or distThreshold to avoid potential issues.")

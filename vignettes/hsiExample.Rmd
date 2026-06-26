@@ -13,7 +13,7 @@ vignette: >
 
 ## Overview
 
-In addition to quantifying uncertainty in patch classifications derived from remote sensing data, `groundTruther` provides output for inclusion in subsequent analyses, such as incorporating estimates of classification accuracy as priors in Bayesian models or utilizing patch reclassifications in calculations of habitat suitability to provide a range of suitable habitat available to focal species. This vignette provides an example of how patch reclassifications can get incorporated into the calculation of a habitat suitability index (HSI). HSIs standardize habitat components (e.g., substrate type, depth, water velocity) as suitability scores and compile the suitability scores for each metric into an overall habitat suitability score to provide an indication of if an area or areas can support the focal species. Typically, HSIs assume information on individual habitat components is known with perfect knowledge and report a single value for a given location. However, information on habitat layers is seldom perfect, thus HSIs (and similar analyses) that assume perfect knowledge do not retain underlying uncertainties in end products. Propagating classification uncertainties provides a range of probable patch compositions for use in calculating HSIs, allowing classification uncertainty to be preserved and accounted for when interpreting end products (e.g., suitability maps), leading to more informed decisions based on the end products.
+In addition to quantifying uncertainty in patch classifications derived from remote sensing data, `groundTruther` provides output for inclusion in subsequent analyses, such as incorporating estimates of classification accuracy as priors in Bayesian models or utilizing patch reclassification in calculations of habitat suitability to provide a range of suitable habitat available to focal species. This vignette provides an example of how patch reclassification can get incorporated into the calculation of a habitat suitability index (HSI). HSIs standardize habitat components (e.g., substrate type, depth, water velocity) as suitability scores and compile the suitability scores for each metric into an overall habitat suitability score to provide an indication of if an area or areas can support the focal species. Typically, HSIs assume information on individual habitat components is known with perfect knowledge and report a single value for a given location. However, information on habitat layers is seldom perfect, thus HSIs (and similar analyses) that assume perfect knowledge do not retain underlying uncertainties in end products. Propagating classification uncertainties provides a range of probable patch compositions for use in calculating HSIs, allowing classification uncertainty to be preserved and accounted for when interpreting end products (e.g., suitability maps), leading to more informed decisions based on the end products.
 
 ## Loading Libraries and Simulating Data
 
@@ -27,13 +27,13 @@ library("terra")
 
 First we simulate the substrate classifications in our hypothetical river system.
 
-```{r, sim patch data, warning=FALSE}
+```{r, sim patch data, warning=FALSE, fig.width=7}
 set.seed(385)
 
-simPatches <- simPatchData(xRange=c(0, 1000), yRange=c(0, 75), cellsize=c(5, 5), crs="EPSG:32617", nPoints=2500,
+simPatches <- simPatchData(xRange=c(0, 1000), yRange=c(0, 150), cellsize=c(5, 5), crs="EPSG:32617", nPoints=2500,
                            patches <- c("Bedrock", "Boulder", "Cobble", "Pebble", "Gravel", "Sand", "Silt"),
-                           patchProbs <- c(0.06, 0.04, 0.1, 0.2, 0, 0.3, 0.3),
-                           classAccu <- rbind(c(0.6,  0.01, 0.05, 0.02, 0.22, 0.05, 0.05), #bedrock
+                           patchProbs <- c(0.06, 0.04, 0.14, 0.16, 0.15, 0.25, 0.2),
+                           classProb <- cbind(c(0.6,  0.01, 0.05, 0.02, 0.22, 0.05, 0.05), #bedrock
                                               c(0.01, 0.48, 0.3,  0.1,  0.09, 0.01, 0.01), #boulder
                                               c(0.1,  0.2,  0.38, 0.2,  0.1,  0.01, 0.01), #cobble
                                               c(0.05, 0.05, 0.2,  0.35, 0.2,  0.1,  0.05), #pebble
@@ -63,11 +63,11 @@ names(depRast) <- "dep"
 names(velRast) <- "vel"
 ```
 
-```{r, plot depths, fig.height=2}
+```{r, plot depths, fig.width=7}
 plot(depRast, plg=list(at=c(0, 4, 8, 12)))
 ```
 
-```{r, plot vel, fig.height=2}
+```{r, plot vel, fig.width=7}
 plot(velRast, plg=list(at=c(0, 2, 4, 6)))
 ```
 
@@ -85,13 +85,13 @@ propUncert_subset <- classificationAccuracy_propagateUncertainty(gtShp=simPatche
                                                                  nReclass=100, gpsAccuracy=1)
 ```
 
-There are a few warnings indicating that some fields have been renamed to avoid duplicate field names in the ground-truthing and remote sensing data sets, prompts for users to ensure matching crs for the data sets, and indications that not all substrate types were recorded in both data sets. We can ignore those for now.
+There are a couple of warnings indicating that some fields have been renamed to avoid duplicate field names in the ground-truthing and remote sensing data sets and a prompt for users to ensure matching crs for the data sets. We can ignore those for now.
 
 ## Convert Data To Suitability Scores
 
 Once the patch types have been reclassified, they will need to be converted to suitability scores. The hypothetical suitability scores for each patch type are included in the altieHSI data, allowing the suitability score of each patch type to be merged to the reclassified patch types.
 
-```{r, convert patches to HSI, fig.height=2}
+```{r, convert patches to HSI, fig.width=5}
 data(altieHSI)
 
 #plots of the suitability scores
@@ -128,7 +128,7 @@ velSI <- classify(velRast, velRC)
 Before an overall HSI score is calculated the cells of the depth and velocity rasters are matched to the classified polygons they are within. Here the suitability scores for each patch type are transposed to an array with a column for each set of reclassifications and a row for each classified patch. The patch IDs are then converted to a raster to obtain the x and y coordinates of each cell of the depth and velocity rasters that are within a patch. The raster of patch IDs is then converted to a data.table along with the depth and velocity rasters for calculating the overall HSI score. Retaining patch ID may not always be necessary, but since some applications may require tracking individual patches, we'll retain patch ID when calculating the overall HSI.
 
 ```{r, match patch polygons to raster cells}
-#create column for casting with reclassID prefix for convinence
+#create column for casting with reclassID prefix for continence
 propSubUncert[, reClassID_col := paste("reClassID", reClassID, sep="_")]
 #recast data and append geometry info
 subSI <- dcast(propSubUncert, remSensID_remSenShp ~ reClassID_col, value.var="SuitabilityIndex")
@@ -152,8 +152,9 @@ indexedSI <- merge(merge(subPolyIndex, depDT, by=c("x", "y")), velDT, by=c("x", 
 setnames(indexedSI, c("dep", "vel"), c("depSI", "velSI"))
 
 #create list to hold HSI calculations for each set of patch reclassifications
-hsiList <- vector("list", length=ncol(subSI)-1)
-for(i in seq_along(hsiList)){
+reclass_idx <- which(propUncert_subset$fullMat==TRUE)
+hsiList <- vector("list", length=length(reclass_idx))
+for(i in reclass_idx){
   #convert patch suitability scores to raster to obtain x and y data for raster cells each polygon contains
   subRast <- rasterize(x=subSI_sf, y=velRast, field=paste("reClassID", i, sep="_"))
   #convert raster back to data.table with x y data
@@ -173,7 +174,7 @@ for(i in seq_along(hsiList)){
 overallHSI <- do.call('rbind', hsiList)
 ```
 
-For comparison, we will also calculate the HSI scores under the false assumption that the initial patch classifications were perfect.
+For comparison, we will also calculate the HSI scores under the false assumption that the initial patch classifications were perfect and calculate the HSI scores for the true patch types.
 
 ```{r, perfect classifications}
 perfectClassSI <- merge(simPatches$remSensPoly, altieHSI, by.x="remSensPatchType", by.y="Classification")
@@ -183,28 +184,39 @@ perfectClassHSI <- merge(indexedSI, perfectClassDT, by=c("x", "y"))
 perfectClassHSI[ , HSI := (SuitabilityIndex * 0.5) + (velSI * 0.4) + (depSI * 0.1)]
 ```
 
+```{r, true classifications}
+trueClassSI <- merge(simPatches$remSensPoly, altieHSI, by.x="gtPatchType", by.y="Classification")
+trueClassRast <- rasterize(x=trueClassSI, y=velRast, field="SuitabilityIndex")
+trueClassDT <- na.omit(as.data.table(trueClassRast, xy=TRUE))
+trueClassHSI <- merge(indexedSI, trueClassDT, by=c("x", "y"))
+trueClassHSI[ , HSI := (SuitabilityIndex * 0.5) + (velSI * 0.4) + (depSI * 0.1)]
+```
+
 The HSI scores can be used as is or converted to classes describing habitat quality. Here we will convert the overall HSI scores to good, moderate, and poor habitat. With good habitat considered an HSI score of 0.8 or greater, poor habitat quality an HSI score less than 0.3, and moderate habitat anything in between.
 
 ```{r, convert to suitability groups}
 overallHSI[, habQuality := ifelse(HSI>=0.8, "Good", ifelse(HSI>=0.3, "Moderate", "Poor"))]
 perfectClassHSI[, habQuality := ifelse(HSI>=0.8, "Good", ifelse(HSI>=0.3, "Moderate", "Poor"))]
+trueClassHSI[, habQuality := ifelse(HSI>=0.8, "Good", ifelse(HSI>=0.3, "Moderate", "Poor"))]
 ```
 
-```{r, comparison plot}
+```{r, comparison plot, fig.height=7, fig.width=7}
 #summarize the area of hsi by each set of reclassifications, since the cell size of the rasters is 1, this is just a count of the number of cells in each habitat quality class
-totAreas <- overallHSI[, .N, by=list(habQuality, reClassID)]
-totAreaSummary <- totAreas[, list(medianArea=median(N), q25Area=quantile(N, 0.25), q75Area=quantile(N, 0.75)), by=habQuality]
+totAreas <- overallHSI[, as.double(.N), by=list(habQuality, reClassID)]
+totAreaSummary <- totAreas[, list(medianArea=median(V1), q25Area=quantile(V1, 0.25), q75Area=quantile(V1, 0.75)), by=habQuality]
 
 areaPerfectClass <- perfectClassHSI[, .N, by=habQuality]
+areaTrueClass <- trueClassHSI[, .N, by=habQuality]
 
-ggplot(totAreas, aes(x=habQuality, y=N)) +
+ggplot(totAreas, aes(x=habQuality, y=V1)) +
   geom_violin() +
   geom_pointrange(data=totAreaSummary, aes(x=habQuality, y=medianArea, ymin=q25Area, ymax=q75Area)) +
   geom_point(data=areaPerfectClass, aes(x=habQuality, y=N), size=2, fill="yellow", shape=22) +
+  geom_point(data=areaTrueClass, aes(x=habQuality, y=N), size=2, fill="cornflower blue", shape=23) +
   labs(y="Area (sq. m)", x="Habitat Quality")
 ```
 
-The above plot shows the median expected area of good, moderate, and poor quality habitat (black dots), the interquartile range of the estimated areas (vertical lines), and the distribution of the estimated areas. In this example, the area of each suitability class assuming perfect detection (yellow squares) is within the expected distributions that account for classification accuracy. However, there is some deviation from the median expectation for moderate and poor quality habitat. The amount of good habitat assuming perfect classification is close to the median expectation that accounts for classification accuracy, however, the availability of uncertainty data adds information that could be useful for inference and decision making. For instance, if a minimum area of 7,500 square m is required to support Altie, there is less confidence that this system could support Altie and future directions may involve additional assessments to reduce uncertainty or restoration of degraded habitat.
+The above plot shows the median expected area of good, moderate, and poor quality habitat (black dots), the interquartile range of the estimated areas (vertical lines), and the distribution of the estimated areas. The expected area of the distributions accounting for classification accuracy overlap the true values (blue diamonds), indicating we are able to recover the truth in this example. However, the area of each suitability class assuming perfect detection (yellow diamonds), deviates from the truth and expectations that account for classification accuracy. Here, assuming perfect detection underestimates the area of good and poor habitat, while overestimating the area of moderate habitat. 
 
 ## Session Info
 

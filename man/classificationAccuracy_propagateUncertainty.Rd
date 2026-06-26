@@ -63,7 +63,7 @@ classificationAccuracy_propagateUncertainty(
 A list with: \itemize{
 \item{\code{gtRemSens}} {A shapefile of class \code{sf} with spatially joined ground-truthing and remote sensing classifications, where ground-truthing patch types are in a column named \code{gtPatch} and \code{remSensPatch} contains classified patch types. If \code{matchMethod=="bufferedSubset"}, the shapefile is subset to only include ground-truthing data points at least \code{proportionOverlap} proportion of their buffered area contained within a single patch type identified through remote sensing (e.g., side-scan sonar).}
 \item{\code{remSensPropUncert}} {A \link[data.table]{data.table} with reclassified patch types, where \code{drawID} is the set of ground-truthing sample location realizations a row belongs to, \code{reClassID} is the set of patch type reclassifications a row belongs to, \code{pullRows} is the row of a confusion matrix (appended from \code{confusionMats} if \code{matchMethod=="randomPoints"}, \code{drawnClassID} is the reclassified patch type as a numeric value, and \code{drawnClass} is the reclassified patch type as a character.}
-\item{\code{probMats}} {A list with matrices of classification accuracy (probabilities remote sensing patch types correspond to ground-truthing patch types, drawn from a multinomial model) for each realization of a set of ground-truthing samples. Remote sensing patch classifications are in rows and the probability classifications correspond to ground-truthed patch types are in columns.}
+\item{\code{probMats}} {A list with matrices of classification accuracy (probabilities remote sensing patch types correspond to ground-truthing patch types, mean estimates from a multinomial model) for each realization of a set of ground-truthing samples. Remote sensing patch classifications are in rows and the probability classifications correspond to ground-truthed patch types are in columns.}
 \item{\code{withinProbs} (if \code{matchMethod=="randomPoints"})} {A \link[data.table]{data.table} with the probability (\code{prop}) a patch type at a ground-truth location (\code{gtPatch}) is within a patch type classified by remote sensing (\code{remSensPatch}) for each ground-truth \code{sampleID}. The number of ground-truthing location draws within a polygon (\code{N}) is also provided.}
 \item{\code{fullMat}} {A vector documenting if probability matrices are complete (\code{TRUE} if complete). Vector elements correspond to slots in \code{probMats}. Probability matrices are flagged as incomplete if the patch types in column names do not match ground-truthing patch types in \code{gtShp}, the patch types in row names do not match the patch types in \code{remSensShp}, or negative probabilities are present in the matrix.}
 \item{\code{weightedProbs} (if \code{matchMethod=="randomPoints"} & \code{weightedModel==TRUE})} {A matrix of class \link[data.table]{data.table}, with mean probabilities remote sensing patch types correspond to ground-truthing patch types. Remote sensing patch types are rows in the column \code{remSensPatch} and ground-truthing designations are in columns. Probabilities are estimated from a multinomial model using the probability a ground-truthing point is within a polygon type to weight the data points.}
@@ -79,8 +79,8 @@ a radius equal to \code{gpsAccuracy} is drawn around each ground-truthing point.
 remote sensed patches and only ground-truthing points with buffered areas contained within a single substrate type are retained for propagation of
 classification uncertainty, representing a data set where the degree of confidence the two data types (ground-truthing points and remote sensing polygons)
 overlap is high. A multinomial model is then used to estimate the probability of remote sensed data being classified (correctly or incorrectly) as
-each patch type. Lastly, probable classification accuracies are drawn from the multinomial model (see \link{drawMultinomProbs}) and the remote sensing classifications
-and classification probabilities are supplied to \link{drawClass} to reclassify the patch type of each remote sensing polygon \code{nReclass} times.
+each patch type. Lastly, the mean coefficient estimates from the multinomial model are converted to classification probabilities and supplied to
+\link{drawClass} to reclassify the patch type of each remote sensing polygon \code{nReclass} times.
 
 If \code{matchMethod=="randomPoints"} \code{gpsAccuracy} is passed to \link{findSD} through \link{locationPointCloud} to determine the corresponding standard
 deviation of the distance root mean square error supplied to \code{gpsAccuracy}, the standard deviation of the GPS error distribution is then passed to
@@ -97,8 +97,8 @@ ground-truthing locations are created to match ground-truthing observations with
 multinomial model where pseudo-observations are weighted by the probability the corresponding ground-truthing point is within the patch type matched to the
 pseudo-observation, thus pseudo-observations with lower probabilities of being within a particular patch type contribute less to the estimated classification
 accuracy than psuedo-observations with higher probabilities of being within a particular patch type. Probable classification accuracies are then drawn from the
-weighted multinomial model (see \link{drawMultinomProbs}) and the remote sensing classifications and classification probabilities are supplied to \link{drawClass}
-to reclassify the patch type of each remote sensing polygon \code{nReclass} times.
+weighted multinomial model (see \link{drawMultinomProbs}) and the mean coefficient estimates from the multinomial model are converted to classification
+probabilities and supplied to \link{drawClass} to reclassify the patch type of each remote sensing polygon \code{nReclass} times.
 }
 \examples{
 data(substrateLayers)

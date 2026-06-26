@@ -28,13 +28,13 @@ simPatchData(
 
 \item{patchProbs}{A vector that defines the proportion of the study area composed by each patch type.}
 
-\item{classAccu}{A square matrix that defines the classification accuracy of each patch type. Columns contain the probability of a true patch type, given an initial patch classification (rows). Rows must sum to 1.}
-
 \item{cellSize}{X and Y dimensions of rectangular patches in the simulated study area.}
+
+\item{classProb}{A square matrix that defines the probability a patch type is classified as each patch type considered. Rows contain the probability of a patch classification, given the true patch type (columns). Columns must sum to 1. Note this not the same as classification accuracy, which is the probability a classification corresponds to a true patch type.}
 }
 \value{
 A list with: \itemize{
-\item{\code{remSensPoly}} {A shapefile of class \code{sf} with simulated remote sensing polygons and classified patch types (remSensPatchType). Other fields include a unique identifier for each polygon (remSensID), the area of each polygon (gridArea), grid geometry (geometry), and the patch type numeric idenfitier (remSensPatchID).}
+\item{\code{remSensPoly}} {A shapefile of class \code{sf} with simulated remote sensing polygons and classified patch types (remSensPatchType). Other fields include a unique identifier for each polygon (remSensID), the area of each polygon (gridArea), grid geometry (geometry), the patch type numeric identifier (remSensPatchID), true patch type (truePatchType), and true patch identifier (truePatchID).}
 \item{\code{gtPoints}} {A shapefile of class \code{sf} with simulated ground-truthing point locations (gtPoints) and unique identifiers for each point (gtID).}
 \item{\code{gtRemSensJoin}} {A shapefile of class \code{sf} with joined ground-truthing and remote sensing data. Ground-truthing patch types (gtPatchType and gtPatchID for the numeric identifier) are the simulated true patch types at the location of each ground-truthing point.}
 }
@@ -45,8 +45,8 @@ Simulate patch classifications and ground-truthing data. Patch polygons are simu
 \examples{
 simPatchData(xRange=c(0, 2500), yRange=c(0, 2500), cellsize=c(16, 16), crs="EPSG:32617", nPoints=2500,
              patches <- c("bedrock", "boulder", "cobble", "pebble", "gravel", "sand", "silt", "other"),
-             patchProbs <- c(0.05, 0.03, 0.1, 0.2, 0, 0.3, 0.3, 0.02),
-             classAccu <- rbind(c(0.6,  0.01, 0.05, 0.02, 0.22, 0.05, 0.05, 0.0), #bedrock
+             patchProbs <- c(0.06, 0.04, 0.14, 0.16, 0.15, 0.25, 0.2),
+             classProb <- cbind(c(0.6,  0.01, 0.05, 0.02, 0.22, 0.05, 0.05, 0.0), #bedrock
                                 c(0.01, 0.48, 0.3,  0.1,  0.09, 0.01, 0.01, 0.0), #boulder
                                 c(0.1,  0.2,  0.38, 0.2,  0.1,  0.01, 0.01, 0.0), #cobble
                                 c(0.05, 0.05, 0.2,  0.35, 0.2,  0.1,  0.05, 0.0), #pebble

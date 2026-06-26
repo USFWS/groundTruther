@@ -3,7 +3,6 @@
 export(bufferSubset)
 export(classificationAccuracy_propagateUncertainty)
 export(drawClass)
-export(drawMultinomProbs)
 export(drawPointsAndJoin)
 export(findSD)
 export(locationPointCloud)

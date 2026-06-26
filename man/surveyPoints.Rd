@@ -27,7 +27,8 @@ remote sensing classifications.}
 \code{nProportion} is provided.}
 
 \item{nProportion}{Proportion of classified patches to receive ground-truthing
-points to survey. Omit if \code{nPatches} is provided.#'}
+points to survey, based on the number of patches that meet \code{distThreshold}
+requirements. Omit if \code{nPatches} is provided.}
 
 \item{nCluster}{Number of points to sample within each randomly selected patch.
 If 1 (default) cluster sampling is not conducted, if greater than 1, cluster
